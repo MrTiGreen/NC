@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="116" height="126" viewBox="0 0 116 126">
+<defs>
+
+<linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="#151412"/>
+  <stop offset="100%" stop-color="#070707"/>
+</linearGradient>
+<pattern id="hatch" patternUnits="userSpaceOnUse" width="18" height="18" patternTransform="rotate(45)">
+  <line x1="0" y1="0" x2="0" y2="18" stroke="#1d1b18" stroke-width="1"/>
+</pattern>
+
+</defs>
+
+<rect x="2" y="2" width="112" height="122" fill="url(#panelGrad)" stroke="#8b572c" stroke-width="2"/>
+<rect x="8" y="8" width="100" height="110" fill="none" stroke="#4a301e" stroke-width="1"/>
+<path d="M10 28V10H28 M88 10H106V28 M10 96V114H28 M88 114H106V96" fill="none" stroke="#8b572c" stroke-width="1.5"/>
+
+</svg>

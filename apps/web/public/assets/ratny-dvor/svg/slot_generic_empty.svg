@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="178" height="112" viewBox="0 0 178 112">
+<defs>
+
+<linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="#151412"/>
+  <stop offset="100%" stop-color="#070707"/>
+</linearGradient>
+<pattern id="hatch" patternUnits="userSpaceOnUse" width="18" height="18" patternTransform="rotate(45)">
+  <line x1="0" y1="0" x2="0" y2="18" stroke="#1d1b18" stroke-width="1"/>
+</pattern>
+
+</defs>
+
+<rect x="2" y="2" width="174" height="108" fill="url(#panelGrad)" stroke="#8b572c" stroke-width="2"/>
+<rect x="8" y="8" width="162" height="96" fill="none" stroke="#4a301e" stroke-width="1"/>
+<rect x="22" y="22" width="132" height="68" fill="url(#hatch)" stroke="#302b23" stroke-width="1"/>
+<circle cx="88" cy="56" r="12" fill="none" stroke="#3f3528" stroke-width="1"/>
+<path d="M10 28V10H28 M148 10H166V28 M10 84V102H28 M148 102H166V84" fill="none" stroke="#8b572c" stroke-width="1.5"/>
+
+</svg>

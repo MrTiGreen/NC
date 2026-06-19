@@ -1,0 +1,779 @@
+.app {
+  --sheet-accent: #d6a15f;
+  --sheet-soft: #191613;
+  --asset-panel: #10100f;
+  --asset-panel-light: #191613;
+  --asset-bronze: #8b572c;
+  --asset-bronze-dark: #4a301e;
+  --asset-gold: #d6a15f;
+  --asset-muted: #9b7450;
+  --asset-red: #962a24;
+  --asset-blue: #2378a8;
+  --asset-green: #223a2b;
+  --asset-line: #2b2720;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  height: 100dvh;
+  margin: 0 auto;
+  border-inline: 1px solid rgba(139, 87, 44, 0.36);
+  background:
+    radial-gradient(circle at 50% -8%, rgba(214, 161, 95, 0.15), transparent 190px),
+    linear-gradient(180deg, rgba(11, 11, 10, 0.7), #0b0b0a 42%),
+    var(--tg-bg);
+  color: #efd9b5;
+}
+
+.header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 8px 6px;
+  border-bottom: 1px solid rgba(139, 87, 44, 0.36);
+  background:
+    linear-gradient(180deg, rgba(25, 22, 19, 0.92), rgba(11, 11, 10, 0.72)),
+    #0b0b0a;
+}
+
+.headerStatus {
+  min-width: 0;
+  min-height: 78px;
+  flex: 1;
+  padding: 18px 18px 15px;
+  background: url("/assets/ratny-dvor/png/ui_panel_top_status_410x160.png") center / 100% 100% no-repeat;
+}
+
+.headerMeta {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.timerPanel {
+  display: flex;
+  width: 76px;
+  height: 78px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 12px 8px;
+  background: url("/assets/ratny-dvor/png/ui_panel_timer_164x160.png") center / 100% 100% no-repeat;
+  color: var(--asset-gold);
+  text-align: center;
+}
+
+.timerPanel strong {
+  color: #f0be7b;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.timerPanel span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--asset-muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.avatarButton {
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+}
+
+.header h1,
+.chatTop h2,
+.listScreen h2,
+.profile h2 {
+  margin: 0;
+  color: #f0be7b;
+  font-size: 20px;
+  line-height: 1.2;
+  text-shadow: 0 1px 0 #000;
+}
+
+.eyebrow,
+.sectionLabel,
+.empty,
+.profile p {
+  margin: 0;
+  color: var(--asset-muted);
+  font-size: 13px;
+}
+
+.main {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: flex-end;
+  overflow: hidden;
+  background: #0b0b0a;
+}
+
+.main::before {
+  position: absolute;
+  inset: 0 0 var(--chat-height) 0;
+  min-height: 210px;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(11, 11, 10, 0.04), rgba(11, 11, 10, 0.34)),
+    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat;
+  content: "";
+  opacity: 0.9;
+}
+
+.main::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent 38%, rgba(11, 11, 10, 0.56) 78%, #0b0b0a),
+    radial-gradient(circle at 50% 20%, transparent 0 150px, rgba(0, 0, 0, 0.18) 320px);
+  content: "";
+}
+
+.chatPage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: flex-end;
+}
+
+.topProfile {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 10px;
+  bottom: calc(var(--chat-height) + 12px);
+  left: 10px;
+  display: flex;
+  min-height: 0;
+  align-items: flex-start;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.topProfile .profile {
+  width: min(100%, 360px);
+  max-height: 100%;
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow-y: auto;
+  pointer-events: auto;
+  scrollbar-width: none;
+}
+
+.topProfile .profile::-webkit-scrollbar {
+  display: none;
+}
+
+.listScreen,
+.profile {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.listScreen::-webkit-scrollbar,
+.onlineList::-webkit-scrollbar {
+  display: none;
+}
+
+.onlineSplit {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  transition: grid-template-columns 170ms ease;
+}
+
+.onlineSplitOpen {
+  grid-template-columns: minmax(0, 1fr) 164px;
+}
+
+.friendsSplit {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  transition: grid-template-columns 170ms ease;
+}
+
+.drawerDragEdge {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.onlineSplitOpen .drawerDragEdge,
+.friendsSplitOpen .drawerDragEdge {
+  display: none;
+}
+
+.friendsSplitOpen {
+  grid-template-columns: minmax(0, 1fr) 164px;
+}
+
+.onlineChatPane {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.onlinePane {
+  min-width: 0;
+  overflow: hidden;
+  border-left: 1px solid rgba(139, 87, 44, 0.56);
+  background:
+    linear-gradient(180deg, rgba(214, 161, 95, 0.05), transparent),
+    #10100f;
+}
+
+.friendsPane {
+  min-width: 0;
+  overflow: hidden;
+  border-left: 1px solid rgba(139, 87, 44, 0.56);
+  background:
+    linear-gradient(180deg, rgba(214, 161, 95, 0.05), transparent),
+    #10100f;
+}
+
+.onlineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 8px 7px 6px;
+  color: var(--asset-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.onlineHeader button {
+  border: 1px solid rgba(139, 87, 44, 0.62);
+  border-radius: 3px;
+  padding: 4px 5px;
+  background:
+    linear-gradient(180deg, rgba(214, 161, 95, 0.08), rgba(139, 87, 44, 0.08)),
+    #10100f;
+  color: var(--asset-gold);
+  font: inherit;
+  font-size: 10px;
+}
+
+.onlineHeader .pinButton {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.onlineHeader .pinButton[aria-pressed="true"] {
+  border-color: var(--asset-gold);
+  background: rgba(139, 87, 44, 0.42);
+}
+
+.onlineList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding: 0 6px 8px;
+  scrollbar-width: none;
+}
+
+.drawerEmpty {
+  margin: 0;
+  padding: 2px 7px 8px;
+  color: var(--asset-muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.onlineUser {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  padding: 7px 6px;
+  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  color: #ead7b8;
+  font: inherit;
+  text-align: left;
+}
+
+.onlineUser .avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.onlineUser > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userAction {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.userNameButton {
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f6c779;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userNameButton:hover,
+.userNameButton:focus-visible {
+  color: #fff0ca;
+  outline: none;
+  text-shadow: 0 0 8px rgba(214, 161, 95, 0.5);
+}
+
+.userMenu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid rgba(139, 87, 44, 0.7);
+  border-radius: 4px;
+  padding: 4px;
+  background: #10100f;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.userMenu button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: transparent;
+  color: #ead7b8;
+  font: inherit;
+  text-align: left;
+}
+
+.userMenu button:hover {
+  background: rgba(139, 87, 44, 0.18);
+}
+
+.userMenu .userMenuIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(139, 87, 44, 0.6);
+  border-radius: 3px;
+  padding: 0;
+  background: #191613;
+  color: var(--asset-gold);
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+}
+
+.userMenu .userMenuIcon:hover:not(:disabled),
+.userMenu .userMenuIcon:focus-visible {
+  border-color: var(--asset-gold);
+  background: rgba(139, 87, 44, 0.38);
+  outline: none;
+}
+
+.userMenu .userMenuIcon:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+.userMenu .userMenuIgnore {
+  border-color: rgba(150, 42, 36, 0.8);
+  color: #e66b63;
+}
+
+.userMenu .userMenuIgnore:hover:not(:disabled),
+.userMenu .userMenuIgnore:focus-visible {
+  border-color: #ef8178;
+  background: rgba(150, 42, 36, 0.34);
+  color: #ffd1cc;
+}
+
+.userMenu .userMenuAdminBlock {
+  border-color: rgba(184, 58, 47, 0.85);
+  color: #ef8178;
+}
+
+.userMenu .userMenuAdminMute {
+  color: #f0cf79;
+}
+
+.userMenu .userMenuAdminJail {
+  color: #b9bed1;
+}
+
+.userMenu .userMenuAdminClear {
+  border-color: rgba(80, 145, 103, 0.85);
+  color: #93d6a4;
+}
+
+.adminNotice {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  right: 12px;
+  max-width: min(360px, calc(100vw - 24px));
+  margin: 0;
+  border: 1px solid rgba(139, 87, 44, 0.7);
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: #10100f;
+  color: #f0cf79;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.privateDialogBar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 8px;
+}
+
+.privateDialogBar span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--asset-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.privateBack {
+  min-width: 68px;
+  min-height: 32px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0 14px;
+  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  color: var(--asset-gold);
+  font: inherit;
+  font-size: 12px;
+}
+
+.listScreen {
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 18px calc(16px + env(safe-area-inset-bottom));
+  scrollbar-width: none;
+}
+
+.privateListHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.privateListHeader p {
+  margin: 4px 0 0;
+  color: var(--asset-muted);
+  font-size: 12px;
+}
+
+.privateContactsButton {
+  min-height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(139, 87, 44, 0.7);
+  border-radius: 3px;
+  padding: 0 10px;
+  background: #191613;
+  color: var(--asset-gold);
+  font: inherit;
+  font-size: 12px;
+}
+
+.privateQuickContacts {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.privateQuickContacts::-webkit-scrollbar {
+  display: none;
+}
+
+.privateContact {
+  display: grid;
+  min-width: 72px;
+  justify-items: center;
+  gap: 5px;
+  border: 1px solid rgba(139, 87, 44, 0.48);
+  border-radius: 5px;
+  padding: 7px 6px;
+  background: rgba(25, 22, 19, 0.8);
+  color: #ead7b8;
+  font: inherit;
+  font-size: 10px;
+}
+
+.privateContact:hover,
+.privateContact:focus-visible {
+  border-color: var(--asset-gold);
+  outline: none;
+}
+
+.privateContact .avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 0;
+  padding: 7px 9px;
+  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  color: #ead7b8;
+  cursor: pointer;
+  text-align: left;
+}
+
+.userRow .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.userRow > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userRow > span > strong,
+.userRow > span > small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRow > span > strong {
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.userRow > span > small {
+  color: var(--asset-muted);
+}
+
+.avatar {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background:
+    url("/assets/ratny-dvor/png/portrait_placeholder_140.png") center / 100% 100% no-repeat,
+    #191613;
+  color: #f0be7b;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.avatarCoalitionGOLD_LIGHT {
+  box-shadow: 0 0 0 2px rgba(255, 247, 198, 0.74), 0 0 10px rgba(255, 231, 139, 0.46);
+}
+
+.avatarCoalitionCRIMSON {
+  box-shadow: 0 0 0 2px rgba(112, 29, 37, 0.94), 0 0 11px rgba(176, 49, 61, 0.52);
+}
+
+.avatarCoalitionMONO {
+  box-shadow: 0 0 0 2px rgba(222, 222, 216, 0.76), 0 0 7px rgba(0, 0, 0, 0.92);
+}
+
+.avatarCoalitionNONE {
+  box-shadow: none;
+}
+
+.profile {
+  position: relative;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 18px;
+  background:
+    linear-gradient(rgba(11, 11, 10, 0.58), rgba(11, 11, 10, 0.72)),
+    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat,
+    #0b0b0a;
+  text-align: center;
+}
+
+.profileBack {
+  align-self: flex-start;
+  min-width: 72px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 14px;
+  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  color: var(--asset-gold);
+  font: inherit;
+}
+
+.profileBlock {
+  min-width: 150px;
+  min-height: 36px;
+  border: 1px solid rgba(150, 42, 36, 0.68);
+  border-radius: 3px;
+  padding: 0 14px;
+  background:
+    linear-gradient(180deg, rgba(150, 42, 36, 0.28), rgba(16, 16, 15, 0.18)),
+    #10100f;
+  color: #ffd18a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.profile .avatar {
+  width: 72px;
+  height: 72px;
+  font-size: 28px;
+}
+
+.profile dl {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.profile dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(139, 87, 44, 0.4);
+  padding: 10px 0;
+}
+
+.profile dt {
+  color: var(--asset-muted);
+}
+
+.profile dd {
+  margin: 0;
+}
+
+.adminGuide {
+  width: 100%;
+  margin-top: 18px;
+  border: 1px solid rgba(139, 87, 44, 0.72);
+  border-radius: 4px;
+  padding: 12px;
+  background: rgba(20, 18, 14, 0.78);
+  color: #ead7b8;
+  text-align: left;
+}
+
+.adminGuide h3,
+.adminGuide p {
+  margin: 0;
+}
+
+.adminGuide h3 {
+  color: var(--asset-gold);
+  font-size: 14px;
+}
+
+.adminGuide p {
+  margin-top: 8px;
+  color: var(--asset-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.centered {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(rgba(11, 11, 10, 0.68), rgba(11, 11, 10, 0.82)),
+    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat,
+    #0b0b0a;
+  color: #efd9b5;
+  text-align: center;
+}

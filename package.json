@@ -1,0 +1,22 @@
+{
+  "name": "telegram-mini-chat",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test -w apps/api",
+    "bots:dialogue": "npm run bots:dialogue -w apps/api --",
+    "bots:dialogue:cleanup": "npm run bots:dialogue:cleanup -w apps/api",
+    "prisma:generate": "npm run prisma:generate -w apps/api",
+    "prisma:migrate": "npm run prisma:migrate -w apps/api"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

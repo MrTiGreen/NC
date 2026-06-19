@@ -1,0 +1,237 @@
+{
+  "project": "Ratny Dvor",
+  "type": "dark medieval art-deco UI asset pack",
+  "format": "PNG transparent + SVG",
+  "palette": {
+    "bg_dark": "#0b0b0a",
+    "panel": "#10100f",
+    "panel_light": "#191613",
+    "bronze": "#8b572c",
+    "bronze_dark": "#4a301e",
+    "gold": "#d6a15f",
+    "muted": "#9b7450",
+    "red": "#962a24",
+    "blue": "#2378a8",
+    "green": "#223a2b",
+    "line": "#2b2720"
+  },
+  "assets": {
+    "panel_top_status": {
+      "file": "png/ui_panel_top_status_410x160.png",
+      "size": [
+        418,
+        168
+      ]
+    },
+    "panel_timer": {
+      "file": "png/ui_panel_timer_164x160.png",
+      "size": [
+        172,
+        168
+      ]
+    },
+    "panel_battle_frame": {
+      "file": "png/ui_panel_battle_frame_432x730.png",
+      "size": [
+        440,
+        738
+      ]
+    },
+    "panel_action_bar": {
+      "file": "png/ui_panel_action_bar_1004x150.png",
+      "size": [
+        1012,
+        158
+      ]
+    },
+    "panel_log_chat": {
+      "file": "png/ui_panel_log_chat_1004x330.png",
+      "size": [
+        1012,
+        338
+      ]
+    },
+    "panel_bottom_nav": {
+      "file": "png/ui_panel_bottom_nav_1004x88.png",
+      "size": [
+        1012,
+        96
+      ]
+    },
+    "slot_large": {
+      "file": "png/slot_large_empty_174x150.png",
+      "size": [
+        182,
+        158
+      ]
+    },
+    "slot_tall": {
+      "file": "png/slot_tall_empty_174x116.png",
+      "size": [
+        182,
+        124
+      ]
+    },
+    "slot_medium": {
+      "file": "png/slot_medium_empty_174x108.png",
+      "size": [
+        182,
+        116
+      ]
+    },
+    "slot_wide": {
+      "file": "png/slot_wide_empty_174x68.png",
+      "size": [
+        182,
+        76
+      ]
+    },
+    "slot_small": {
+      "file": "png/slot_small_empty_92x86.png",
+      "size": [
+        100,
+        94
+      ]
+    },
+    "slot_accessory": {
+      "file": "png/slot_accessory_empty_92x104.png",
+      "size": [
+        100,
+        112
+      ]
+    },
+    "slot_shield": {
+      "file": "png/slot_shield_empty_92x144.png",
+      "size": [
+        100,
+        152
+      ]
+    },
+    "slot_enemy_large": {
+      "file": "png/slot_enemy_large_empty_174x150.png",
+      "size": [
+        182,
+        158
+      ]
+    },
+    "slot_enemy_small": {
+      "file": "png/slot_enemy_small_empty_92x86.png",
+      "size": [
+        100,
+        94
+      ]
+    },
+    "button_small": {
+      "file": "png/button_small_empty_112x122.png",
+      "size": [
+        120,
+        130
+      ]
+    },
+    "button_compact": {
+      "file": "png/button_compact_empty_104x122.png",
+      "size": [
+        112,
+        130
+      ]
+    },
+    "button_confirm": {
+      "file": "png/button_confirm_252x134.png",
+      "size": [
+        260,
+        142
+      ]
+    },
+    "tab_active": {
+      "file": "png/tab_active_190x46.png",
+      "size": [
+        198,
+        54
+      ]
+    },
+    "tab_inactive": {
+      "file": "png/tab_inactive_160x46.png",
+      "size": [
+        168,
+        54
+      ]
+    },
+    "input_field": {
+      "file": "png/input_field_270x48.png",
+      "size": [
+        278,
+        56
+      ]
+    },
+    "hp_bar": {
+      "file": "png/bar_hp_sample_230x14.png",
+      "size": [
+        238,
+        22
+      ]
+    },
+    "mp_bar": {
+      "file": "png/bar_mp_sample_230x14.png",
+      "size": [
+        238,
+        22
+      ]
+    },
+    "portrait_placeholder": {
+      "file": "png/portrait_placeholder_140.png",
+      "size": [
+        148,
+        148
+      ]
+    },
+    "decor_corner": {
+      "file": "png/decor_corner_64.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    "battle_empty_background": {
+      "file": "png/battle_empty_background_432x706.png",
+      "size": [
+        432,
+        706
+      ]
+    },
+    "svg_panel_generic": {
+      "file": "svg/panel_generic.svg",
+      "size": [
+        224,
+        124
+      ]
+    },
+    "svg_slot_generic": {
+      "file": "svg/slot_generic_empty.svg",
+      "size": [
+        178,
+        112
+      ]
+    },
+    "svg_button_generic": {
+      "file": "svg/button_generic_empty.svg",
+      "size": [
+        116,
+        126
+      ]
+    },
+    "preview_atlas": {
+      "file": "asset_preview_atlas.png",
+      "size": [
+        1024,
+        1536
+      ]
+    }
+  },
+  "notes": [
+    "No characters and no equipment/items are included.",
+    "Slot files are empty placeholders with hatch texture.",
+    "PNG sizes include 4px shadow padding around most UI elements.",
+    "SVG files are generic scalable versions for CSS/React usage.",
+    "Recommended: use PNG for prototype, then convert final UI to CSS/SVG components."
+  ]
+}

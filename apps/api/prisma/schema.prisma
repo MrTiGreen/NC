@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int                   @id @default(autoincrement())
+  telegramId              BigInt                @unique @map("telegram_id")
+  username                String?
+  firstName               String?               @map("first_name")
+  lastName                String?               @map("last_name")
+  avatarUrl               String?               @map("avatar_url")
+  role                    UserRole              @default(USER)
+  coalition               Coalition             @default(NONE)
+  publicMutedUntil        DateTime?             @map("public_muted_until")
+  jailedUntil             DateTime?             @map("jailed_until")
+  chatBlockedAt           DateTime?             @map("chat_blocked_at")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+  publicMessages          PublicMessage[]
+  guildMessages           GuildMessage[]
+  sentPrivateMessages     PrivateMessage[]      @relation("sentMessages")
+  receivedPrivateMessages PrivateMessage[]      @relation("receivedMessages")
+  moderationEvents        ChatModerationEvent[]
+  blockedUsers            UserBlock[]           @relation("blockerBlocks")
+  blockedByUsers          UserBlock[]           @relation("blockedBlocks")
+  adminActionsTaken       AdminModerationAction[] @relation("adminActionActor")
+  adminActionsReceived    AdminModerationAction[] @relation("adminActionTarget")
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Coalition {
+  GOLD_LIGHT
+  CRIMSON
+  MONO
+  NONE
+}
+
+enum AdminModerationActionType {
+  BLOCK_USER
+  MUTE_USER
+  JAIL_USER
+  CLEAR_SANCTIONS
+}
+
+model PublicMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("public_messages")
+}
+
+model GuildMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("guild_messages")
+}
+
+model PrivateMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  sender     User     @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  text       String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, senderId, createdAt])
+  @@index([createdAt])
+  @@map("private_messages")
+}
+
+enum ChatModerationAction {
+  WARN_MESSAGE_MUTED
+  USER_MUTED
+  USER_JAILED
+}
+
+enum ChatModerationSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+model ChatModerationEvent {
+  id          Int                    @id @default(autoincrement())
+  userId      Int                    @map("user_id")
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      ChatModerationAction
+  severity    ChatModerationSeverity
+  reason      String
+  messageText String                 @map("message_text")
+  mutedUntil  DateTime?              @map("muted_until")
+  jailedUntil DateTime?              @map("jailed_until")
+  createdAt   DateTime               @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([mutedUntil])
+  @@map("chat_moderation_events")
+}
+
+model UserBlock {
+  id        Int      @id @default(autoincrement())
+  blockerId Int      @map("blocker_id")
+  blockedId Int      @map("blocked_id")
+  blocker   User     @relation("blockerBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("blockedBlocks", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("user_blocks")
+}
+
+model AdminModerationAction {
+  id          Int                       @id @default(autoincrement())
+  actorId     Int                       @map("actor_id")
+  actor       User                      @relation("adminActionActor", fields: [actorId], references: [id], onDelete: Cascade)
+  targetId    Int                       @map("target_id")
+  target      User                      @relation("adminActionTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  action      AdminModerationActionType
+  mutedUntil  DateTime?                 @map("muted_until")
+  jailedUntil DateTime?                 @map("jailed_until")
+  chatBlocked Boolean                   @default(false) @map("chat_blocked")
+  createdAt   DateTime                  @default(now()) @map("created_at")
+
+  @@index([targetId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("admin_moderation_actions")
+}
