@@ -715,7 +715,7 @@ function FriendsSplitView({
       }}
     >
       <div className={styles.drawerDragEdge} aria-hidden="true" />
-      <section className={styles.listScreen}>
+      <section className={styles.listScreen} data-no-pager-drag="true">
         <div className={styles.privateQuickContacts}>
           {friends.filter((friend) => !blockedUserIds.has(friend.id)).map((friend) => (
             <button className={styles.privateContact} key={friend.id} type="button" onClick={() => onOpenDialog(friend)}>
@@ -765,7 +765,7 @@ function FriendsSplitView({
           <span>Игроки</span>
           <PinToggleButton pinned={pinned} onToggle={() => onPinnedChange(!pinned)} />
         </div>
-        <div className={styles.onlineList}>
+        <div className={styles.onlineList} data-no-pager-drag="true">
           {friends.map((friend) => (
             <div className={styles.onlineUser} key={friend.id}>
               <Avatar user={friend} />
@@ -945,7 +945,7 @@ function GuildChatPanel({
           onOpenChange={drawerControls.onOpenChange}
           onPinnedChange={drawerControls.onPinnedChange}
           side={
-            <div className={styles.onlineList}>
+            <div className={styles.onlineList} data-no-pager-drag="true">
               {guildmates.map((user) => (
                 <div className={styles.onlineUser} key={user.id}>
                   <Avatar user={user} />
@@ -1035,7 +1035,7 @@ function BattleLogPanel({
           onPinnedChange={drawerControls.onPinnedChange}
           side={
             participants.length > 0 ? (
-              <div className={styles.onlineList}>
+              <div className={styles.onlineList} data-no-pager-drag="true">
                 {participants.map((user) => (
                   <div className={styles.onlineUser} key={user.id}>
                     <Avatar user={user} />
@@ -1441,7 +1441,7 @@ function OnlineSplitView({
           <span>Онлайн</span>
           <PinToggleButton pinned={pinned} onToggle={() => onPinnedChange(!pinned)} />
         </div>
-        <div className={styles.onlineList}>
+        <div className={styles.onlineList} data-no-pager-drag="true">
           {onlineUsers.map((user) => (
             <div className={styles.onlineUser} key={user.id}>
               <Avatar user={user} />

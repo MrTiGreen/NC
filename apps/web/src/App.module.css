@@ -248,7 +248,10 @@
 }
 
 .onlinePane {
+  display: flex;
   min-width: 0;
+  min-height: 0;
+  flex-direction: column;
   overflow: hidden;
   border-left: 1px solid rgba(139, 87, 44, 0.56);
   background:
@@ -257,7 +260,10 @@
 }
 
 .friendsPane {
+  display: flex;
   min-width: 0;
+  min-height: 0;
+  flex-direction: column;
   overflow: hidden;
   border-left: 1px solid rgba(139, 87, 44, 0.56);
   background:
@@ -305,6 +311,8 @@
 
 .onlineList {
   display: flex;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;

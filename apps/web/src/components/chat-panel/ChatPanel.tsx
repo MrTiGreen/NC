@@ -132,7 +132,7 @@ export type ChatMessageListProps = {
 
 export function ChatMessageList({ children, emptyText, scrollRef }: ChatMessageListProps) {
   return (
-    <div className={styles.messages} ref={scrollRef}>
+    <div className={styles.messages} data-no-pager-drag="true" ref={scrollRef}>
       {emptyText && <p className={styles.empty}>{emptyText}</p>}
       {children}
     </div>
@@ -196,7 +196,7 @@ export type LogPanelProps = {
 
 export function LogPanel({ entries, emptyText = "Записей пока нет." }: LogPanelProps) {
   return (
-    <div className={styles.logPanel}>
+    <div className={styles.logPanel} data-no-pager-drag="true">
       {entries.length === 0 && <p className={styles.empty}>{emptyText}</p>}
       {entries.map((entry) => (
         <article className={styles.logEntry} data-tone={entry.tone ?? "neutral"} key={entry.id}>
