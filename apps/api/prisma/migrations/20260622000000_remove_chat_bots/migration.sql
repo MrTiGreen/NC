@@ -1,0 +1,2 @@
+DELETE FROM "users"
+WHERE "telegram_id" IN (9100000001, 9100000002);

@@ -1253,6 +1253,24 @@ function UserActionName({
             <span aria-hidden="true">✉</span>
           </button>
           <button
+            aria-label="Вызвать на дуэль"
+            className={`${styles.userMenuIcon} ${styles.userMenuDuel}`}
+            disabled
+            title="Вызвать на дуэль — будет доступно с боевым модулем"
+            type="button"
+          >
+            <span aria-hidden="true">⚔</span>
+          </button>
+          <button
+            aria-label="Предложить обмен"
+            className={`${styles.userMenuIcon} ${styles.userMenuExchange}`}
+            disabled
+            title="Предложить обмен — будет доступно с модулем обмена"
+            type="button"
+          >
+            <span aria-hidden="true">⇄</span>
+          </button>
+          <button
             aria-label={isBlocked ? "Unignore" : "Ignore"}
             className={`${styles.userMenuIcon} ${styles.userMenuIgnore}`}
             disabled={!canBlock || !onToggleBlockedUser}

@@ -3,7 +3,6 @@ import { ChatModerationAction, ChatModerationSeverity } from "@prisma/client";
 import { type Response, Router } from "express";
 import { MAX_PAGE_LIMIT, privateMessageRequestSchema, publicMessageRequestSchema } from "@telegram-mini-chat/shared";
 import { config } from "../config.js";
-import { createSimpleBotReply } from "../bots/simpleDialogueBots.js";
 import {
   buildActiveJailNotice,
   buildActiveMuteNotice,
@@ -61,7 +60,6 @@ messagesRouter.post("/public/messages", async (req, res) => {
   const dto = serializePublicMessage(message);
   getIo(req.app)?.to("public").emit("public:message", dto);
   res.status(201).json(dto);
-  void emitSimpleBotReply(req.app, { channel: "public", senderId: authUser.id, text: body.data.text });
 });
 
 messagesRouter.get("/guild/messages", async (req, res) => {
@@ -108,7 +106,6 @@ messagesRouter.post("/guild/messages", async (req, res) => {
   const dto = serializeGuildMessage(message);
   getIo(req.app)?.to("guild").emit("guild:message", dto);
   res.status(201).json(dto);
-  void emitSimpleBotReply(req.app, { channel: "guild", senderId: authUser.id, text: body.data.text });
 });
 
 messagesRouter.get("/private/dialogs", async (req, res) => {
@@ -260,42 +257,10 @@ messagesRouter.post("/private/messages", async (req, res) => {
   io?.to(`user:${message.senderId}`).emit("private:dialog:update", dto);
 
   res.status(201).json(dto);
-  void emitSimpleBotReply(req.app, {
-    channel: "private",
-    senderId: authUser.id,
-    receiverId: message.receiverId,
-    text: body.data.text
-  });
 });
 
 function getIo(app: { locals: Record<string, unknown> }) {
   return app.locals.io as Server | undefined;
-}
-
-async function emitSimpleBotReply(
-  app: { locals: Record<string, unknown> },
-  input: { channel: "public" | "guild" | "private"; senderId: number; receiverId?: number; text: string }
-) {
-  try {
-    const reply = await createSimpleBotReply(input);
-    if (!reply) {
-      return;
-    }
-
-    const io = getIo(app);
-    if (input.channel === "private") {
-      const message = reply as import("@telegram-mini-chat/shared").PrivateMessageDto;
-      io?.to(`user:${message.receiver.id}`).emit("private:message", message);
-      io?.to(`user:${message.sender.id}`).emit("private:message", message);
-      io?.to(`user:${message.receiver.id}`).emit("private:dialog:update", message);
-      io?.to(`user:${message.sender.id}`).emit("private:dialog:update", message);
-      return;
-    }
-
-    io?.to(input.channel).emit(`${input.channel}:message`, reply);
-  } catch (error) {
-    console.error("Simple dialogue bot reply failed", error);
-  }
 }
 
 function getPagination(query: Record<string, unknown>) {

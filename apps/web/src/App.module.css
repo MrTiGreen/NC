@@ -449,6 +449,14 @@
   color: #e66b63;
 }
 
+.userMenu .userMenuDuel {
+  color: #e7b576;
+}
+
+.userMenu .userMenuExchange {
+  color: #91c7ae;
+}
+
 .userMenu .userMenuIgnore:hover:not(:disabled),
 .userMenu .userMenuIgnore:focus-visible {
   border-color: #ef8178;
