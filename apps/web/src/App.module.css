@@ -182,26 +182,32 @@
 }
 
 .chatPage {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
   display: flex;
   width: 100%;
   min-width: 0;
   min-height: 0;
   margin-inline: auto;
   align-items: flex-end;
+  pointer-events: none;
+}
+
+.chatPage > * {
+  pointer-events: auto;
 }
 
 .battleArena {
-  --battle-chat-height: 40dvh;
   --battle-controls-height: 67px;
+  --battle-scene-height: 72%;
   position: absolute;
   z-index: 0;
   inset: 0;
   display: flex;
   min-height: 220px;
   flex-direction: column;
-  padding: 8px 9px calc(var(--battle-chat-height) + var(--battle-controls-height) + 8px);
+  padding: 8px 9px;
   overflow: hidden;
   touch-action: pan-y;
   background:
@@ -222,7 +228,7 @@
 .battleScene {
   position: relative;
   width: 100%;
-  height: 80%;
+  height: var(--battle-scene-height);
   min-width: 0;
   flex: 0 0 auto;
   overflow: hidden;
@@ -501,6 +507,21 @@
   overflow: hidden;
 }
 
+.gearDrawer[data-side="enemy"] .gearGrid {
+  grid-template-areas:
+    "helmet helmet helmet helmet helmet helmet earring-right earring-right earring-right earring-left earring-left earring-left"
+    "helmet helmet helmet helmet helmet helmet amulet amulet amulet amulet amulet amulet"
+    "bracers bracers bracers bracers bracers bracers weapon weapon weapon weapon weapon weapon"
+    "gloves gloves gloves gloves gloves gloves weapon weapon weapon weapon weapon weapon"
+    "quick-three quick-three quick-two quick-two quick-one quick-one weapon weapon weapon weapon weapon weapon"
+    "belt belt belt belt belt belt armor armor armor armor armor armor"
+    "shield shield shield shield shield shield armor armor armor armor armor armor"
+    "shield shield shield shield shield shield armor armor armor armor armor armor"
+    "shield shield shield shield shield shield pants pants pants pants pants pants"
+    "boots boots boots boots boots boots pants pants pants pants pants pants"
+    "boots boots boots boots boots boots pants pants pants pants pants pants";
+}
+
 .gearSlot {
   display: grid;
   min-width: 0;
@@ -725,7 +746,7 @@
   position: absolute;
   z-index: 3;
   right: 0;
-  top: calc(80% + 8px);
+  top: calc(var(--battle-scene-height) + 8px);
   left: 0;
   display: grid;
   width: min(calc(100% - 18px), 690px);

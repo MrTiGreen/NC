@@ -288,8 +288,8 @@ export function App() {
           </span>
         </button>
         <div className={styles.roundStatus}>
-          <p>поединок</p>
-          <h1>Раунд 7 / дождь</h1>
+          <p>Таймер хода</p>
+          <h1>00:10</h1>
         </div>
         <div className={`${styles.combatantHeader} ${styles.combatantHeaderEnemy}`} aria-label="Противник Gestiya">
           <span className={styles.combatantName}>Gestiya</span>
@@ -304,7 +304,7 @@ export function App() {
       </header>
 
       <main className={styles.main}>
-        <BattleArena chatHeight={chatHeight} />
+        <BattleArena />
         {profileOpen && me && (
           <div className={styles.topProfile}>
             <Profile user={me} onBack={() => setProfileOpen(false)} />
@@ -820,7 +820,7 @@ const gearItemCards: Record<GearSide, Partial<Record<GearSlotId, GearItemCard>>>
   }
 };
 
-function BattleArena({ chatHeight }: { chatHeight: number }) {
+function BattleArena() {
   const [gearDrawerStates, setGearDrawerStates] = useState<Record<GearSide, GearDrawerState>>({
     player: "closed",
     enemy: "closed"
@@ -898,7 +898,6 @@ function BattleArena({ chatHeight }: { chatHeight: number }) {
       aria-label="Сцена поединка"
       onPointerDown={beginEdgeSwipe}
       onPointerUp={finishEdgeSwipe}
-      style={{ "--battle-chat-height": `${chatHeight}dvh` } as React.CSSProperties}
     >
       <div className={styles.battleArenaLayout}>
         <div className={styles.battleScene}>
@@ -1483,7 +1482,7 @@ function FriendsSplitView({
         if (!dragRef.current.open && delta < -42) {
           onOpenChange(true);
         }
-        if (dragRef.current.open && delta > 42 && !pinned) {
+        if (dragRef.current.open && Math.abs(delta) > 42 && !pinned) {
           onOpenChange(false);
         }
       }}
@@ -2207,7 +2206,7 @@ function OnlineSplitView({
     <div
       className={`${styles.onlineSplit} ${visible ? styles.onlineSplitOpen : ""}`}
       onPointerDown={(event) => {
-        if (shouldIgnoreDrawerDrag(event.target)) {
+        if (shouldIgnoreOnlineDrawerDrag(event.target)) {
           return;
         }
         dragRef.current = { x: event.clientX, open: visible };
@@ -2221,7 +2220,7 @@ function OnlineSplitView({
         if (!dragRef.current.open && delta < -42) {
           onOpenChange(true);
         }
-        if (dragRef.current.open && delta > 42 && !pinned) {
+        if (dragRef.current.open && Math.abs(delta) > 42 && !pinned) {
           onOpenChange(false);
         }
       }}
@@ -2302,7 +2301,7 @@ function DrawerSplitView({
         if (!dragRef.current.open && delta < -42) {
           onOpenChange(true);
         }
-        if (dragRef.current.open && delta > 42 && !pinned) {
+        if (dragRef.current.open && Math.abs(delta) > 42 && !pinned) {
           onOpenChange(false);
         }
       }}
@@ -2474,7 +2473,15 @@ function shouldIgnoreDrawerDrag(target: EventTarget | null) {
     return false;
   }
 
-  return Boolean(target.closest("button, input, textarea, select, a, [role='button'], [data-no-pager-drag='true']"));
+  return Boolean(target.closest("button, input, textarea, select, a, [role='button']"));
+}
+
+function shouldIgnoreOnlineDrawerDrag(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest("button, input, textarea, select, a, [role='button']"));
 }
 
 function releasePagerPointer(element: HTMLElement, pointerId: number) {
@@ -2568,7 +2575,7 @@ function normalizeNick(value: string) {
 
 function readChatHeight() {
   const saved = Number(localStorage.getItem("telegram-mini-chat-height"));
-  if (saved >= 9 && saved <= 90) {
+  if (saved >= 9 && saved <= 100) {
     return saved;
   }
 
@@ -2577,7 +2584,7 @@ function readChatHeight() {
 
 function setPersistedChatHeight(setter: React.Dispatch<React.SetStateAction<number>>) {
   return (value: number) => {
-    const nextValue = Math.min(90, Math.max(9, value));
+    const nextValue = Math.min(100, Math.max(9, value));
     localStorage.setItem("telegram-mini-chat-height", String(nextValue));
     setter(nextValue);
   };
