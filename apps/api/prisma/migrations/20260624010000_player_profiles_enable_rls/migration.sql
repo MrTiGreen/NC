@@ -1,0 +1,1 @@
+ALTER TABLE "player_profiles" ENABLE ROW LEVEL SECURITY;

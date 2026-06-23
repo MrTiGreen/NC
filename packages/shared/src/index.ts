@@ -8,6 +8,17 @@ export const telegramAuthRequestSchema = z.object({
   initData: z.string().default("")
 });
 
+export const playerNicknameSchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-zА-Яа-яЁё]+$/u, "Nickname may contain letters only")
+  .max(32, "Nickname cannot exceed 32 characters");
+
+export const playerRegistrationRequestSchema = z.object({
+  nickname: playerNicknameSchema,
+  age: z.coerce.number().int().min(1).max(120)
+});
+
 export const messageTextSchema = z
   .string()
   .trim()
@@ -88,6 +99,15 @@ export type AuthResponseDto = {
   token: string;
   user: CurrentUserDto;
   blockedUserIds: number[];
+};
+
+export type PlayerProfileDto = {
+  id: number;
+  userId: number;
+  nickname: string;
+  registeredAt: string;
+  age: number;
+  birthCity: string;
 };
 
 export type BlockedUsersDto = {

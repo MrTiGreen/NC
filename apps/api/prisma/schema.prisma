@@ -30,8 +30,23 @@ model User {
   blockedByUsers          UserBlock[]           @relation("blockedBlocks")
   adminActionsTaken       AdminModerationAction[] @relation("adminActionActor")
   adminActionsReceived    AdminModerationAction[] @relation("adminActionTarget")
+  playerProfile           PlayerProfile?
 
   @@map("users")
+}
+
+model PlayerProfile {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique @map("user_id")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nickname           String
+  nicknameNormalized String   @unique @map("nickname_normalized")
+  registeredAt       DateTime @default(now()) @map("registered_at")
+  age                Int
+  birthCity          String   @map("birth_city")
+
+  @@index([registeredAt])
+  @@map("player_profiles")
 }
 
 enum UserRole {

@@ -17,6 +17,7 @@
   max-width: 720px;
   height: 100dvh;
   margin: 0 auto;
+  overflow: hidden;
   border-inline: 1px solid rgba(139, 87, 44, 0.36);
   background:
     radial-gradient(circle at 50% -8%, rgba(214, 161, 95, 0.15), transparent 190px),
@@ -200,7 +201,8 @@
 
 .battleArena {
   --battle-controls-height: 67px;
-  --battle-scene-height: 72%;
+  --battle-scene-height: 65%;
+  --battle-controls-top: 52%;
   position: absolute;
   z-index: 0;
   inset: 0;
@@ -268,7 +270,7 @@
   width: clamp(46px, 11%, 74px);
   grid-template-rows: repeat(4, minmax(0, 1fr));
   align-items: center;
-  gap: 5px;
+  gap: 4.5px;
 }
 
 .battleZoneButtons[data-kind="defense"] {
@@ -427,7 +429,7 @@
 }
 
 .gearOpenLabel[data-side="player"] {
-  top: calc(80% - 52px);
+  top: calc(var(--battle-scene-height) - 52px);
   right: auto;
   bottom: auto;
   left: -6px;
@@ -435,7 +437,7 @@
 }
 
 .gearOpenLabel[data-side="enemy"] {
-  top: calc(80% - 52px);
+  top: calc(var(--battle-scene-height) - 52px);
   right: -6px;
   bottom: auto;
   left: auto;
@@ -443,7 +445,7 @@
 }
 
 .gearDrawerLabel {
-  top: calc(100% - 52px);
+  top: calc(81.25% - 52px);
   bottom: auto;
 }
 
@@ -746,7 +748,7 @@
   position: absolute;
   z-index: 3;
   right: 0;
-  top: calc(var(--battle-scene-height) + 8px);
+  top: calc(var(--battle-controls-top) + 8px);
   left: 0;
   display: grid;
   width: min(calc(100% - 18px), 690px);
@@ -843,6 +845,101 @@
 
   .battleControls {
     gap: 4px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .app {
+    max-width: 960px;
+  }
+
+  .header {
+    grid-template-columns: minmax(0, 1fr) minmax(118px, 0.55fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: calc(6px + env(safe-area-inset-top)) 12px 6px;
+  }
+
+  .combatantName {
+    margin-bottom: 3px;
+    font-size: clamp(14px, 2.6vw, 20px);
+  }
+
+  .combatantBar {
+    height: 6px;
+    margin-top: 3px;
+  }
+
+  .roundStatus p {
+    margin-bottom: 2px;
+    font-size: 8px;
+  }
+
+  .roundStatus h1 {
+    font-size: clamp(14px, 2.6vw, 20px);
+  }
+
+  .battleArena {
+    --battle-scene-height: 65%;
+    --battle-controls-top: 54%;
+    padding: 5px 8px;
+  }
+
+  .battleArenaLayout,
+  .battleControls {
+    width: min(calc(100% - 16px), 920px);
+  }
+
+  .battleZoneButtons {
+    top: 6%;
+    bottom: 6%;
+    width: clamp(40px, 8vw, 64px);
+    gap: 2.7px;
+  }
+
+  .battleZoneButtons[data-kind="defense"] {
+    left: 7px;
+  }
+
+  .battleZoneButtons[data-kind="attack"] {
+    right: 7px;
+  }
+
+  .battleZoneButtons button {
+    padding: 3px;
+    font-size: clamp(7px, 1.2vw, 10px);
+  }
+
+  .gearDrawer {
+    height: 76%;
+  }
+
+  .gearDrawerLabel {
+    top: calc(85.5% - 52px);
+  }
+
+  .battleControls {
+    top: calc(var(--battle-controls-top) + 5px);
+    min-height: 46px;
+    grid-template-columns: minmax(82px, 1fr) minmax(104px, 1.15fr) minmax(82px, 1fr);
+    gap: 6px;
+  }
+
+  .quickSlots {
+    width: clamp(82px, 18vw, 132px);
+  }
+
+  .confirmTurn {
+    min-height: 44px;
+    padding-block: 4px;
+  }
+
+  .confirmTurn strong {
+    font-size: clamp(13px, 2.5vw, 18px);
+  }
+
+  .confirmTurn span {
+    margin-top: 2px;
+    font-size: 7px;
   }
 }
 

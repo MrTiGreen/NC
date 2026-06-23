@@ -2575,7 +2575,7 @@ function normalizeNick(value: string) {
 
 function readChatHeight() {
   const saved = Number(localStorage.getItem("telegram-mini-chat-height"));
-  if (saved >= 9 && saved <= 100) {
+  if (saved >= 20 && saved <= 100) {
     return saved;
   }
 
@@ -2584,7 +2584,7 @@ function readChatHeight() {
 
 function setPersistedChatHeight(setter: React.Dispatch<React.SetStateAction<number>>) {
   return (value: number) => {
-    const nextValue = Math.min(100, Math.max(9, value));
+    const nextValue = Math.min(100, Math.max(20, value));
     localStorage.setItem("telegram-mini-chat-height", String(nextValue));
     setter(nextValue);
   };

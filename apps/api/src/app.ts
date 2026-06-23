@@ -6,6 +6,7 @@ import { config } from "./config.js";
 import { requireAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.js";
 import { messagesRouter } from "./routes/messages.js";
+import { playersRouter } from "./routes/players.js";
 import { usersRouter } from "./routes/users.js";
 
 export function createApp() {
@@ -41,6 +42,7 @@ export function createApp() {
 
   app.use("/api/auth", authRouter);
   app.use("/api", requireAuth, usersRouter);
+  app.use("/api", requireAuth, playersRouter);
   app.use("/api", requireAuth, messageLimiter, messagesRouter);
 
   app.use((_req, res) => {
