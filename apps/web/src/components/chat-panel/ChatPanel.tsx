@@ -39,9 +39,12 @@ export function ChatPanel<TTab extends string>({
   loadingText,
   tone
 }: ChatPanelProps<TTab>) {
+  const isCollapsed = Boolean(height && height <= 10);
+
   return (
     <section
       className={styles.panel}
+      data-collapsed={isCollapsed || undefined}
       data-panel={tone ?? activeTab}
       style={height ? ({ "--chat-panel-height": `${height}dvh` } as CSSProperties) : undefined}
     >

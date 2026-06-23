@@ -270,30 +270,41 @@ export function App() {
     >
     <div className={styles.app} style={{ "--chat-height": `${chatHeight}dvh` } as React.CSSProperties}>
       <header className={styles.header}>
-        <div className={styles.headerStatus}>
-          <p className={styles.eyebrow}>Telegram Mini App</p>
-          <h1>Mini Chat</h1>
+        <button
+          aria-label="Открыть профиль"
+          className={`${styles.combatantHeader} ${styles.combatantHeaderPlayer}`}
+          type="button"
+          onClick={() => {
+            setSelectedProfile(null);
+            setProfileOpen(true);
+          }}
+        >
+          <span className={styles.combatantName}>{me ? displayName(me) : "MrGreen"}</span>
+          <span className={styles.combatantBar} data-tone="health">
+            <span style={{ width: "100%" }} />
+          </span>
+          <span className={styles.combatantBar} data-tone="mana">
+            <span style={{ width: "54%" }} />
+          </span>
+        </button>
+        <div className={styles.roundStatus}>
+          <p>поединок</p>
+          <h1>Раунд 7 / дождь</h1>
         </div>
-        <div className={styles.headerMeta}>
-          <div className={styles.timerPanel} aria-label="Пользователей онлайн" title="Пользователей онлайн">
-            <strong>{users.length + (me ? 1 : 0)}</strong>
-            <span>онлайн</span>
-          </div>
-          <button
-            className={styles.avatarButton}
-            type="button"
-            onClick={() => {
-              setSelectedProfile(null);
-              setProfileOpen(true);
-            }}
-          >
-            <Avatar user={me} />
-          </button>
+        <div className={`${styles.combatantHeader} ${styles.combatantHeaderEnemy}`} aria-label="Противник Gestiya">
+          <span className={styles.combatantName}>Gestiya</span>
+          <span className={styles.combatantBar} data-tone="health">
+            <span style={{ width: "100%" }} />
+          </span>
+          <span className={styles.combatantBar} data-tone="mana">
+            <span style={{ width: "54%" }} />
+          </span>
         </div>
         {me?.role === "ADMIN" && adminNotice && <p className={styles.adminNotice}>{adminNotice}</p>}
       </header>
 
       <main className={styles.main}>
+        <BattleArena chatHeight={chatHeight} />
         {profileOpen && me && (
           <div className={styles.topProfile}>
             <Profile user={me} onBack={() => setProfileOpen(false)} />
@@ -419,6 +430,781 @@ export function App() {
       </main>
     </div>
     </AdminControlsContext.Provider>
+  );
+}
+
+type GearSide = "player" | "enemy";
+type GearDrawerState = "closed" | "opening" | "closing";
+type CombatZone = "head" | "torso" | "belly" | "legs";
+
+const combatZones: ReadonlyArray<{ value: CombatZone; label: string }> = [
+  { value: "head", label: "Голова" },
+  { value: "torso", label: "Корпус" },
+  { value: "belly", label: "Живот" },
+  { value: "legs", label: "Ноги" }
+];
+
+type GearSlotId =
+  | "earring-left"
+  | "earring-right"
+  | "helmet"
+  | "bracers"
+  | "amulet"
+  | "weapon"
+  | "gloves"
+  | "quick-one"
+  | "quick-two"
+  | "quick-three"
+  | "armor"
+  | "belt"
+  | "shield"
+  | "pants"
+  | "boots";
+type GearSlot = { id: GearSlotId };
+type GearItemCard = {
+  id: string;
+  name: string;
+  symbol: string;
+  rarity: "rare" | "epic";
+  description: string;
+  stats: ReadonlyArray<{ label: string; value: string }>;
+  modifiers: ReadonlyArray<string>;
+};
+type GearItemPreview = {
+  item: GearItemCard;
+  left: number;
+  top: number;
+};
+
+function makeGearItemCard(
+  id: string,
+  name: string,
+  symbol: string,
+  rarity: GearItemCard["rarity"],
+  description: string,
+  stats: GearItemCard["stats"],
+  modifiers: GearItemCard["modifiers"]
+): GearItemCard {
+  return { id, name, symbol, rarity, description, stats, modifiers };
+}
+
+const gearSlots: ReadonlyArray<GearSlot> = [
+  { id: "earring-left" },
+  { id: "earring-right" },
+  { id: "helmet" },
+  { id: "bracers" },
+  { id: "amulet" },
+  { id: "weapon" },
+  { id: "gloves" },
+  { id: "quick-one" },
+  { id: "quick-two" },
+  { id: "quick-three" },
+  { id: "armor" },
+  { id: "belt" },
+  { id: "shield" },
+  { id: "pants" },
+  { id: "boots" }
+];
+
+// Карточка — единственный источник названия, характеристик и модификаторов предмета.
+const gearItemCards: Record<GearSide, Partial<Record<GearSlotId, GearItemCard>>> = {
+  player: {
+    "earring-left": {
+      id: "dew-earring",
+      name: "Серьга росы",
+      symbol: "◈",
+      rarity: "rare",
+      description: "Тонкая серьга, сохраняющая холод дождя перед ударом.",
+      stats: [
+        { label: "Ловкость", value: "+4" },
+        { label: "Уклонение", value: "+2%" }
+      ],
+      modifiers: ["Сопротивление холоду +3%"]
+    },
+    amulet: {
+      id: "mist-amulet",
+      name: "Амулет тумана",
+      symbol: "✦",
+      rarity: "epic",
+      description: "Старинный амулет, который скрывает намерение следующей атаки.",
+      stats: [
+        { label: "Стойкость", value: "+7" },
+        { label: "Мана", value: "+14" }
+      ],
+      modifiers: ["Первый блок в раунде поглощает ещё 4 урона", "Скорость восстановления маны +5%"]
+    },
+    helmet: {
+      id: "watch-helmet",
+      name: "Шлем дозора",
+      symbol: "◒",
+      rarity: "rare",
+      description: "Закалённый шлем городской стражи с усиленной защитой лица.",
+      stats: [
+        { label: "Броня", value: "+11" },
+        { label: "Здоровье", value: "+18" }
+      ],
+      modifiers: ["Сопротивление критическому удару +3%"]
+    },
+    bracers: {
+      id: "scout-bracers",
+      name: "Наручи разведчика",
+      symbol: "⌁",
+      rarity: "rare",
+      description: "Гибкие наручи, не сковывающие кисть во время финта.",
+      stats: [
+        { label: "Точность", value: "+5" },
+        { label: "Ловкость", value: "+3" }
+      ],
+      modifiers: ["Шанс контратаки +2%"]
+    },
+    weapon: {
+      id: "rain-blade",
+      name: "Клинок дождя",
+      symbol: "⚔",
+      rarity: "epic",
+      description: "Клинок, заточенный для быстрых выпадов в тесном бою.",
+      stats: [
+        { label: "Урон", value: "+18" },
+        { label: "Точность", value: "+6" }
+      ],
+      modifiers: ["Критический урон +8%", "Урон по корпусу +4%"]
+    },
+    armor: {
+      id: "wind-cuirass",
+      name: "Кираса ветра",
+      symbol: "⬡",
+      rarity: "epic",
+      description: "Лёгкая многослойная кираса для выживания в затяжном поединке.",
+      stats: [
+        { label: "Броня", value: "+22" },
+        { label: "Стойкость", value: "+6" }
+      ],
+      modifiers: ["Получаемый урон от ног -3%", "Сопротивление кровотечению +6%"]
+    },
+    shield: {
+      id: "watch-shield",
+      name: "Щит дозора",
+      symbol: "⬟",
+      rarity: "rare",
+      description: "Широкий щит, которым удобно закрывать корпус и живот.",
+      stats: [
+        { label: "Блок", value: "+9%" },
+        { label: "Броня", value: "+8" }
+      ],
+      modifiers: ["Успешный блок даёт 2 стойкости"]
+    },
+    "earring-right": makeGearItemCard(
+      "wind-earring",
+      "Серьга ветра",
+      "◈",
+      "rare",
+      "Лёгкая серьга с тонкой серебряной цепочкой.",
+      [{ label: "Скорость", value: "+3" }, { label: "Уклонение", value: "+2%" }],
+      ["Скорость первого хода +2%"]
+    ),
+    gloves: makeGearItemCard(
+      "steel-gloves",
+      "Перчатки стали",
+      "⌁",
+      "rare",
+      "Плотные перчатки, защищающие кисти при блоке.",
+      [{ label: "Блок", value: "+3%" }, { label: "Точность", value: "+3" }],
+      ["Защита рук +4"]
+    ),
+    "quick-one": makeGearItemCard(
+      "ruby-potion",
+      "Зелье рубина",
+      "◉",
+      "rare",
+      "Боевой флакон с быстрым восстановлением сил.",
+      [{ label: "Здоровье", value: "+35" }, { label: "Зарядов", value: "3" }],
+      ["Использование не завершает ход"]
+    ),
+    "quick-two": makeGearItemCard(
+      "smoke-flask",
+      "Дымовой флакон",
+      "◌",
+      "rare",
+      "Флакон, сбивающий противнику прицел.",
+      [{ label: "Уклонение", value: "+8%" }, { label: "Зарядов", value: "2" }],
+      ["Действует один раунд"]
+    ),
+    "quick-three": makeGearItemCard(
+      "ward-scroll",
+      "Свиток защиты",
+      "✷",
+      "epic",
+      "Одноразовый свиток с кругом отражения удара.",
+      [{ label: "Блок", value: "+12%" }, { label: "Зарядов", value: "1" }],
+      ["Снимает один отрицательный эффект"]
+    ),
+    belt: makeGearItemCard(
+      "ward-belt",
+      "Пояс стражи",
+      "◫",
+      "rare",
+      "Кожаный пояс с несколькими боевыми креплениями.",
+      [{ label: "Здоровье", value: "+12" }, { label: "Стойкость", value: "+3" }],
+      ["Вместимость быстрых предметов +1"]
+    ),
+    pants: makeGearItemCard(
+      "storm-greaves",
+      "Поножи грозы",
+      "▥",
+      "rare",
+      "Гибкие поножи, не мешающие уходить с линии удара.",
+      [{ label: "Броня", value: "+9" }, { label: "Ловкость", value: "+4" }],
+      ["Защита ног +3%"]
+    ),
+    boots: makeGearItemCard(
+      "trail-boots",
+      "Обувь следопыта",
+      "◒",
+      "rare",
+      "Мягкая боевая обувь с цепкой подошвой.",
+      [{ label: "Скорость", value: "+5" }, { label: "Уклонение", value: "+2%" }],
+      ["Сопротивление замедлению +4%"]
+    )
+  },
+  enemy: {
+    "earring-right": {
+      id: "cinder-earring",
+      name: "Серьга угля",
+      symbol: "◈",
+      rarity: "rare",
+      description: "Тёплая серьга с тлеющей искрой в оправе.",
+      stats: [
+        { label: "Сила", value: "+4" },
+        { label: "Огненный урон", value: "+3" }
+      ],
+      modifiers: ["Сопротивление огню +3%"]
+    },
+    helmet: {
+      id: "rival-helmet",
+      name: "Шлем Гестии",
+      symbol: "◒",
+      rarity: "epic",
+      description: "Тяжёлый шлем соперницы, скрывающий взгляд за узкой прорезью.",
+      stats: [
+        { label: "Броня", value: "+13" },
+        { label: "Стойкость", value: "+5" }
+      ],
+      modifiers: ["Сопротивление оглушению +5%"]
+    },
+    weapon: {
+      id: "ember-sabre",
+      name: "Сабля угля",
+      symbol: "⚔",
+      rarity: "epic",
+      description: "Изогнутая сабля с нагретой режущей кромкой.",
+      stats: [
+        { label: "Урон", value: "+17" },
+        { label: "Сила", value: "+5" }
+      ],
+      modifiers: ["Урон по голове +5%", "Шанс поджога +4%"]
+    },
+    armor: {
+      id: "ash-cuirass",
+      name: "Кираса пепла",
+      symbol: "⬡",
+      rarity: "rare",
+      description: "Потемневшая кираса, собранная из жёстких пластин.",
+      stats: [
+        { label: "Броня", value: "+20" },
+        { label: "Здоровье", value: "+15" }
+      ],
+      modifiers: ["Сопротивление рубящему урону +4%"]
+    },
+    shield: {
+      id: "ash-shield",
+      name: "Щит пепла",
+      symbol: "⬟",
+      rarity: "rare",
+      description: "Щит с шершавой обугленной поверхностью.",
+      stats: [
+        { label: "Блок", value: "+8%" },
+        { label: "Стойкость", value: "+4" }
+      ],
+      modifiers: ["Блок против атаки в живот +3%"]
+    },
+    "earring-left": makeGearItemCard(
+      "ember-earring",
+      "Серьга искры",
+      "◈",
+      "rare",
+      "Маленькая серьга с рубиновой крошкой.",
+      [{ label: "Сила", value: "+3" }, { label: "Крит. шанс", value: "+2%" }],
+      ["Урон по голове +2%"]
+    ),
+    amulet: makeGearItemCard(
+      "coal-amulet",
+      "Амулет угля",
+      "✦",
+      "epic",
+      "Тёплый амулет, отдающий накопленный жар владельцу.",
+      [{ label: "Мана", value: "+12" }, { label: "Сила", value: "+6" }],
+      ["Огненный урон +5%", "Сопротивление холоду +4%"]
+    ),
+    bracers: makeGearItemCard(
+      "rival-bracers",
+      "Наручи дуэлянта",
+      "⌁",
+      "rare",
+      "Наручи из тёмной кожи для резких разворотов клинка.",
+      [{ label: "Точность", value: "+4" }, { label: "Сила", value: "+2" }],
+      ["Шанс контратаки +2%"]
+    ),
+    gloves: makeGearItemCard(
+      "ash-gloves",
+      "Перчатки пепла",
+      "⌁",
+      "rare",
+      "Шершавые перчатки с жаростойкой подкладкой.",
+      [{ label: "Блок", value: "+3%" }, { label: "Сила", value: "+3" }],
+      ["Сопротивление ожогу +3%"]
+    ),
+    "quick-one": makeGearItemCard(
+      "enemy-health-potion",
+      "Настой пепла",
+      "◉",
+      "rare",
+      "Горький настой, быстро возвращающий выносливость.",
+      [{ label: "Здоровье", value: "+30" }, { label: "Зарядов", value: "3" }],
+      ["Использование не завершает ход"]
+    ),
+    "quick-two": makeGearItemCard(
+      "ember-oil",
+      "Масло угля",
+      "◌",
+      "rare",
+      "Масло, которое усиливает следующий режущий удар.",
+      [{ label: "Урон", value: "+9" }, { label: "Зарядов", value: "2" }],
+      ["Действует на следующую атаку"]
+    ),
+    "quick-three": makeGearItemCard(
+      "flame-seal",
+      "Печать пламени",
+      "✷",
+      "epic",
+      "Печать, оставляющая огненный след на броне цели.",
+      [{ label: "Поджог", value: "+2" }, { label: "Зарядов", value: "1" }],
+      ["Снижает лечение цели на 10%"]
+    ),
+    belt: makeGearItemCard(
+      "rival-belt",
+      "Пояс дуэлянта",
+      "◫",
+      "rare",
+      "Жёсткий пояс с креплениями для расходников.",
+      [{ label: "Стойкость", value: "+4" }, { label: "Здоровье", value: "+10" }],
+      ["Вместимость быстрых предметов +1"]
+    ),
+    pants: makeGearItemCard(
+      "ash-greaves",
+      "Поножи пепла",
+      "▥",
+      "rare",
+      "Тяжёлые пластины для защиты ног в низкой стойке.",
+      [{ label: "Броня", value: "+10" }, { label: "Стойкость", value: "+3" }],
+      ["Защита ног +3%"]
+    ),
+    boots: makeGearItemCard(
+      "duelist-boots",
+      "Обувь дуэлянта",
+      "◒",
+      "rare",
+      "Высокие ботинки, устойчивые на мокром камне.",
+      [{ label: "Скорость", value: "+4" }, { label: "Уклонение", value: "+2%" }],
+      ["Сопротивление замедлению +3%"]
+    )
+  }
+};
+
+function BattleArena({ chatHeight }: { chatHeight: number }) {
+  const [gearDrawerStates, setGearDrawerStates] = useState<Record<GearSide, GearDrawerState>>({
+    player: "closed",
+    enemy: "closed"
+  });
+  const [defenseZone, setDefenseZone] = useState<CombatZone>("torso");
+  const [attackZone, setAttackZone] = useState<CombatZone>("head");
+  const swipeStart = useRef<{ side: GearSide; x: number; y: number } | null>(null);
+  const closeTimers = useRef<Partial<Record<GearSide, number>>>({});
+
+  useEffect(() => () => {
+    Object.values(closeTimers.current).forEach((timer) => window.clearTimeout(timer));
+  }, []);
+
+  function openGearDrawer(side: GearSide) {
+    const timer = closeTimers.current[side];
+
+    if (timer) {
+      window.clearTimeout(timer);
+      delete closeTimers.current[side];
+    }
+
+    setGearDrawerStates((current) => ({ ...current, [side]: "opening" }));
+  }
+
+  function closeGearDrawer(side: GearSide) {
+    if (gearDrawerStates[side] === "closed" || gearDrawerStates[side] === "closing") {
+      return;
+    }
+
+    setGearDrawerStates((current) => ({ ...current, [side]: "closing" }));
+    closeTimers.current[side] = window.setTimeout(() => {
+      setGearDrawerStates((current) => ({ ...current, [side]: "closed" }));
+      delete closeTimers.current[side];
+    }, 280);
+  }
+
+  function beginEdgeSwipe(event: React.PointerEvent<HTMLElement>) {
+    if (event.target instanceof HTMLElement && event.target.closest("[data-gear-drawer]")) {
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const side = x <= 112 ? "player" : x >= rect.width - 112 ? "enemy" : null;
+
+    if (side) {
+      swipeStart.current = { side, x: event.clientX, y: event.clientY };
+    }
+  }
+
+  function finishEdgeSwipe(event: React.PointerEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+
+    if (!start) {
+      return;
+    }
+
+    const horizontalDistance = event.clientX - start.x;
+    const verticalDistance = event.clientY - start.y;
+    const isHorizontalSwipe = Math.abs(horizontalDistance) >= 44 && Math.abs(horizontalDistance) > Math.abs(verticalDistance);
+
+    if (!isHorizontalSwipe) {
+      return;
+    }
+
+    if ((start.side === "player" && horizontalDistance > 0) || (start.side === "enemy" && horizontalDistance < 0)) {
+      openGearDrawer(start.side);
+    }
+  }
+
+  return (
+    <section
+      className={styles.battleArena}
+      aria-label="Сцена поединка"
+      onPointerDown={beginEdgeSwipe}
+      onPointerUp={finishEdgeSwipe}
+      style={{ "--battle-chat-height": `${chatHeight}dvh` } as React.CSSProperties}
+    >
+      <div className={styles.battleArenaLayout}>
+        <div className={styles.battleScene}>
+          <img alt="Поединок MrGreen и Gestiya под дождём" src="/assets/nightclub/battle-rain.jpg" />
+          <div className={styles.battleZoneButtons} data-kind="defense" aria-label="Зоны защиты">
+            {combatZones.map((zone) => (
+              <button
+                aria-label={`Защита: ${zone.label}`}
+                aria-pressed={defenseZone === zone.value}
+                data-selected={defenseZone === zone.value || undefined}
+                key={zone.value}
+                type="button"
+                onClick={() => setDefenseZone(zone.value)}
+              >
+                {zone.label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.battleZoneButtons} data-kind="attack" aria-label="Зоны атаки">
+            {combatZones.map((zone) => (
+              <button
+                aria-label={`Атака: ${zone.label}`}
+                aria-pressed={attackZone === zone.value}
+                data-selected={attackZone === zone.value || undefined}
+                key={zone.value}
+                type="button"
+                onClick={() => setAttackZone(zone.value)}
+              >
+                {zone.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {gearDrawerStates.player === "closed" && (
+          <button
+            aria-label="Открыть вещи игрока"
+            className={styles.gearOpenLabel}
+            data-side="player"
+            type="button"
+            onClick={() => openGearDrawer("player")}
+          >
+            Вещи
+          </button>
+        )}
+        {gearDrawerStates.enemy === "closed" && (
+          <button
+            aria-label="Открыть вещи противника"
+            className={styles.gearOpenLabel}
+            data-side="enemy"
+            type="button"
+            onClick={() => openGearDrawer("enemy")}
+          >
+            Вещи
+          </button>
+        )}
+        {gearDrawerStates.player !== "closed" && (
+          <GearDrawer motion={gearDrawerStates.player} side="player" onClose={() => closeGearDrawer("player")} />
+        )}
+        {gearDrawerStates.enemy !== "closed" && (
+          <GearDrawer motion={gearDrawerStates.enemy} side="enemy" onClose={() => closeGearDrawer("enemy")} />
+        )}
+        <div className={styles.battleControls}>
+          <div className={styles.quickSlots} aria-label="Сумка">
+            <span />
+            <span />
+            <span />
+          </div>
+          <button className={styles.confirmTurn} type="button">
+            <strong>Вперёд</strong>
+            <span>подтвердить ход</span>
+          </button>
+          <div className={styles.quickSlots} aria-label="Приёмы">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude<GearDrawerState, "closed">; onClose: () => void }) {
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const didDragLabel = useRef(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const isPlayer = side === "player";
+  const [hoveredPreview, setHoveredPreview] = useState<GearItemPreview | null>(null);
+  const [selectedPreview, setSelectedPreview] = useState<GearItemPreview | null>(null);
+  const activePreview = hoveredPreview ?? selectedPreview;
+  const itemsBySlot = gearItemCards[side];
+
+  useEffect(() => {
+    function closeDescriptionOutsideItem(event: PointerEvent) {
+      const target = event.target;
+
+      if (target instanceof Element && drawerRef.current?.contains(target) && target.closest('[data-has-item="true"]')) {
+        return;
+      }
+
+      setHoveredPreview(null);
+      setSelectedPreview(null);
+    }
+
+    document.addEventListener("pointerdown", closeDescriptionOutsideItem, true);
+    return () => document.removeEventListener("pointerdown", closeDescriptionOutsideItem, true);
+  }, []);
+
+  function createItemPreview(item: GearItemCard, target: HTMLElement): GearItemPreview {
+    const drawer = target.closest<HTMLElement>("[data-gear-drawer]");
+
+    if (!drawer) {
+      return { item, left: 8, top: 120 };
+    }
+
+    const drawerRect = drawer.getBoundingClientRect();
+    const slotRect = target.getBoundingClientRect();
+    const slotLeft = slotRect.left - drawerRect.left;
+    const slotTop = slotRect.top - drawerRect.top;
+    const cardWidth = Math.min(240, Math.max(0, window.innerWidth - 16));
+    const spaceOnLeft = slotRect.left - 8;
+    const spaceOnRight = window.innerWidth - slotRect.right - 8;
+    let placeOnRight = side === "player";
+
+    if (placeOnRight && spaceOnRight < cardWidth && spaceOnLeft >= cardWidth) {
+      placeOnRight = false;
+    } else if (!placeOnRight && spaceOnLeft < cardWidth && spaceOnRight >= cardWidth) {
+      placeOnRight = true;
+    } else if (spaceOnLeft < cardWidth && spaceOnRight < cardWidth) {
+      placeOnRight = spaceOnRight >= spaceOnLeft;
+    }
+
+    const pageLeft = placeOnRight
+      ? Math.min(slotRect.right + 8, window.innerWidth - cardWidth - 8)
+      : Math.max(8, slotRect.left - cardWidth - 8);
+    const left = pageLeft - drawerRect.left;
+    const safeVerticalOffset = Math.min(116, Math.max(36, drawerRect.height / 2 - 8));
+    const middle = slotTop + slotRect.height / 2;
+    const top = Math.min(Math.max(middle, safeVerticalOffset), drawerRect.height - safeVerticalOffset);
+
+    return { item, left, top };
+  }
+
+  function finishDrawerDrag(event: React.PointerEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+
+    if (!start) {
+      return;
+    }
+
+    const rawOffset = event.clientX - start.x;
+    const dragDistance = Math.abs(isPlayer ? Math.min(0, rawOffset) : Math.max(0, rawOffset));
+    const isClosingDrag = dragDistance >= Math.max(44, event.currentTarget.clientWidth * 0.14);
+
+    if (isClosingDrag) {
+      onClose();
+      return;
+    }
+
+    setDragOffset(0);
+  }
+
+  return (
+    <aside
+      className={styles.gearDrawer}
+      ref={drawerRef}
+      data-gear-drawer="true"
+      data-dragging={isDragging || undefined}
+      data-item-card-open={activePreview ? "true" : undefined}
+      data-motion={motion}
+      data-side={side}
+      aria-label={isPlayer ? "Обмундирование игрока" : "Инвентарь противника"}
+      style={{ "--gear-drag-offset": `${dragOffset}px` } as React.CSSProperties}
+      onPointerDown={(event) => {
+        if (!(event.target instanceof HTMLElement)) {
+          return;
+        }
+
+        event.currentTarget.setPointerCapture(event.pointerId);
+        didDragLabel.current = false;
+        setIsDragging(true);
+        swipeStart.current = { x: event.clientX, y: event.clientY };
+      }}
+      onPointerMove={(event) => {
+        const start = swipeStart.current;
+
+        if (!start) {
+          return;
+        }
+
+        const rawOffset = event.clientX - start.x;
+        const nextOffset = isPlayer ? Math.min(0, rawOffset) : Math.max(0, rawOffset);
+
+        if (Math.abs(nextOffset) > 5) {
+          didDragLabel.current = true;
+        }
+
+        setDragOffset(nextOffset);
+      }}
+      onPointerUp={(event) => {
+        if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+          return;
+        }
+
+        finishDrawerDrag(event);
+        setIsDragging(false);
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }}
+    >
+      <button
+        aria-label={isPlayer ? "Закрыть вещи игрока" : "Закрыть вещи противника"}
+        className={styles.gearDrawerLabel}
+        data-gear-drawer-label="true"
+        type="button"
+        onClick={() => {
+          if (didDragLabel.current) {
+            didDragLabel.current = false;
+            return;
+          }
+
+          onClose();
+        }}
+      >
+        Вещи
+      </button>
+      <div className={styles.gearGrid}>
+        {gearSlots.map((slot) => {
+          const item = itemsBySlot[slot.id];
+
+          if (!item) {
+            return (
+              <div className={styles.gearSlot} data-slot={slot.id} key={slot.id} />
+            );
+          }
+
+          const isSelected = selectedPreview?.item.id === item.id;
+
+          return (
+            <button
+              aria-label={`Открыть карточку: ${item.name}`}
+              aria-pressed={isSelected}
+              className={styles.gearSlot}
+              data-has-item="true"
+              data-rarity={item.rarity}
+              data-selected={isSelected || undefined}
+              data-slot={slot.id}
+              key={slot.id}
+              title={item.name}
+              type="button"
+              onBlur={() => setHoveredPreview(null)}
+              onClick={(event) => {
+                if (didDragLabel.current) {
+                  didDragLabel.current = false;
+                  return;
+                }
+
+                const preview = createItemPreview(item, event.currentTarget);
+                setSelectedPreview((current) => (current?.item.id === item.id ? null : preview));
+              }}
+              onFocus={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
+              onPointerEnter={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
+              onPointerLeave={() => setHoveredPreview(null)}
+            >
+              <span aria-hidden="true" className={styles.gearItemGlyph}>{item.symbol}</span>
+            </button>
+          );
+        })}
+      </div>
+      {activePreview && <GearItemDescription preview={activePreview} />}
+    </aside>
+  );
+}
+
+function GearItemDescription({ preview }: { preview: GearItemPreview }) {
+  const { item } = preview;
+
+  return (
+    <section
+      className={styles.gearItemCard}
+      data-rarity={item.rarity}
+      role="tooltip"
+      style={{ left: `${preview.left}px`, top: `${preview.top}px` }}
+    >
+      <div className={styles.gearItemCardHeading}>
+        <span aria-hidden="true" className={styles.gearItemCardGlyph}>{item.symbol}</span>
+        <div>
+          <p>{item.rarity === "epic" ? "Эпический предмет" : "Редкий предмет"}</p>
+          <h3>{item.name}</h3>
+        </div>
+      </div>
+      <p className={styles.gearItemDescription}>{item.description}</p>
+      <dl className={styles.gearItemStats}>
+        {item.stats.map((stat) => (
+          <div key={stat.label}>
+            <dt>{stat.label}</dt>
+            <dd>{stat.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <ul className={styles.gearItemModifiers}>
+        {item.modifiers.map((modifier) => <li key={modifier}>{modifier}</li>)}
+      </ul>
+    </section>
   );
 }
 
@@ -1782,7 +2568,7 @@ function normalizeNick(value: string) {
 
 function readChatHeight() {
   const saved = Number(localStorage.getItem("telegram-mini-chat-height"));
-  if (saved >= 30 && saved <= 90) {
+  if (saved >= 9 && saved <= 90) {
     return saved;
   }
 
@@ -1791,7 +2577,7 @@ function readChatHeight() {
 
 function setPersistedChatHeight(setter: React.Dispatch<React.SetStateAction<number>>) {
   return (value: number) => {
-    const nextValue = Math.min(90, Math.max(30, value));
+    const nextValue = Math.min(90, Math.max(9, value));
     localStorage.setItem("telegram-mini-chat-height", String(nextValue));
     setter(nextValue);
   };

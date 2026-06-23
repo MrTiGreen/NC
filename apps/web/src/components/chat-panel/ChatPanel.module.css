@@ -15,7 +15,7 @@
   width: 100%;
   min-width: 0;
   min-height: 0;
-  height: clamp(30dvh, var(--chat-panel-height, 40dvh), 90dvh);
+  height: clamp(9dvh, var(--chat-panel-height, 40dvh), 90dvh);
   flex: 0 0 auto;
   flex-direction: column;
   border: 0;
@@ -66,6 +66,19 @@
   position: relative;
   height: 17px;
   flex: 0 0 auto;
+}
+
+.panel[data-collapsed="true"] > :not(.resizeZone):not(.composerWrap) {
+  display: none;
+}
+
+.panel[data-collapsed="true"] .composerWrap {
+  margin-top: auto;
+}
+
+.panel[data-collapsed="true"] .composer {
+  padding-top: 7px;
+  padding-bottom: calc(7px + env(safe-area-inset-bottom));
 }
 
 .resizeHandle {
