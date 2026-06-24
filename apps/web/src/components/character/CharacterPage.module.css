@@ -24,7 +24,9 @@
 }
 
 .headerTopline { position: relative; height: 55px; border: 1px solid #9a7520; border-radius: 10px; background: rgba(13, 10, 6, 0.96); }
-.headerPortrait { position: absolute; top: 2px; left: 3px; width: 50px; height: 50px; border: 1px solid #9a7520; border-radius: 50%; object-fit: cover; }
+.headerTopline > button { display: none; }
+.headerPortrait { position: absolute; z-index: 3; top: 2px; left: 3px; width: 50px; height: 50px; border: 1px solid #9a7520; border-radius: 50%; background: #0d0a06; clip-path: circle(50%); object-fit: cover; }
+.headerPortraitControl { position: absolute; z-index: 3; top: 2px; left: 3px; width: 50px; height: 50px; }
 .identity { position: absolute; top: 3px; left: 63px; width: min(206px, calc(100% - 145px)); min-width: 0; }
 .identity strong { display: block; overflow: hidden; color: #3f9d58; font-size: 14px; font-weight: 500; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .resourceRows { display: grid; width: 100%; gap: 3px; margin-top: 4px; }
@@ -40,8 +42,6 @@
 .statusBadges .purple { color: #7d4ea6; }
 .currencies { position: absolute; top: 4px; right: 8px; display: grid; gap: 3px; color: #d6a84a; font-size: 20px; font-weight: 700; line-height: 1.1; text-align: left; white-space: nowrap; }
 .currencies span:last-child { color: #8f7650; font-weight: 500; }
-.closeButton { position: absolute; z-index: 2; top: -1px; right: -1px; width: 20px; height: 20px; border: 0; padding: 0; background: transparent; color: transparent; font-size: 1px; }
-.closeButton:focus-visible { color: #d6a84a; font-size: 18px; outline: 1px solid #fed580; }
 .experienceLine { position: absolute; right: 6px; bottom: 1px; left: 6px; height: 11px; overflow: hidden; border: 1px solid #9a7520; border-radius: 0 0 10px 10px; background: rgba(0, 0, 0, 0.55); }
 .experienceFill { position: absolute; inset: 1px auto 1px 0; background: var(--gold); }
 .experienceLine span:last-child { position: relative; display: block; color: #000; font-size: 8px; font-weight: 800; line-height: 9px; text-align: center; }
@@ -51,7 +51,13 @@
 .overview { min-height: 338px; }
 .sceneMeta { position: relative; height: 42px; }
 .opponentInfo { position: absolute; top: 0; left: 65px; width: 120px; }
-.opponentInfo > span { display: block; color: #3f9d58; font-size: 14px; line-height: 16px; white-space: nowrap; }
+.profileNicknameMenu { position: relative; display: block; }
+.sceneOpponentButton { display: block; border: 0; padding: 0; background: transparent; color: #3f9d58; font: inherit; font-size: 14px; line-height: 16px; white-space: nowrap; }
+.sceneOpponentButton:hover, .sceneOpponentButton:focus-visible { color: #7ed08a; outline: none; text-shadow: 0 0 8px rgba(83, 188, 105, 0.45); }
+.profileNicknameActions { position: absolute; z-index: 8; top: calc(100% + 4px); left: 0; display: grid; grid-template-columns: repeat(3, 26px); gap: 3px; border: 1px solid rgba(154, 117, 32, 0.68); padding: 3px; background: #10100f; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55); }
+.profileNicknameActions button { width: 26px; height: 26px; border: 1px solid rgba(154, 117, 32, 0.55); padding: 0; background: #15130e; color: #d6a84a; font: inherit; font-size: 13px; }
+.profileNicknameActions button:disabled { opacity: 0.35; }
+.profileNicknameActions button:hover:not(:disabled), .profileNicknameActions button:focus-visible { border-color: #fed580; outline: none; }
 .opponentBars { display: grid; gap: 3px; margin-top: 2px; }
 .sceneProgress { position: relative; display: block; height: 8px; overflow: hidden; border: 1px solid #9a7520; border-radius: 6px; background: rgba(28, 22, 15, 0.65); }
 .sceneProgress i { position: absolute; inset: 1px auto 1px 0; display: block; border-radius: inherit; }

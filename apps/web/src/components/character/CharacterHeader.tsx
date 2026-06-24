@@ -1,10 +1,12 @@
+import type { ReactNode } from "react";
 import type { CharacterPageData, ProgressMetric } from "./types";
 import styles from "./CharacterPage.module.css";
 
 type CharacterHeaderProps = {
   characterName: string;
   data: Pick<CharacterPageData, "level" | "health" | "energy" | "experience" | "currencies" | "statusBadges">;
-  onClose: () => void;
+  portraitControl?: ReactNode;
+  identityControl?: ReactNode;
 };
 
 function ProgressBar({ metric }: { metric: ProgressMetric }) {
@@ -17,13 +19,17 @@ function ProgressBar({ metric }: { metric: ProgressMetric }) {
   );
 }
 
-export function CharacterHeader({ characterName, data, onClose }: CharacterHeaderProps) {
+export function CharacterHeader({ characterName, data, portraitControl, identityControl }: CharacterHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.headerTopline}>
-        <img className={styles.headerPortrait} src="/assets/character-page/portrait.png" alt="" />
+        {portraitControl ? (
+          <div className={styles.headerPortraitControl}>{portraitControl}</div>
+        ) : (
+          <img className={styles.headerPortrait} src="/assets/character-page/portrait.png" alt="" />
+        )}
         <div className={styles.identity}>
-          <strong>{characterName} · ур.{data.level}</strong>
+          {identityControl ?? <strong>{characterName} · ур.{data.level}</strong>}
           <div className={styles.resourceRows}>
             <ProgressBar metric={data.health} />
             <ProgressBar metric={data.energy} />
@@ -39,7 +45,6 @@ export function CharacterHeader({ characterName, data, onClose }: CharacterHeade
             <span key={currency.id}>{currency.symbol} {currency.value.toLocaleString("ru-RU")}</span>
           ))}
         </div>
-        <button className={styles.closeButton} type="button" aria-label="Закрыть профиль" onClick={onClose}>×</button>
       </div>
       <div className={styles.experienceLine}>
         <span className={styles.experienceFill} style={{ width: `${(data.experience.current / data.experience.maximum) * 100}%` }} />

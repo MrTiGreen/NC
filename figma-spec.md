@@ -8,6 +8,12 @@
 - The HTML is flat: `v22_154` has 111 direct absolute-positioned child layers. It contains no semantic subframe hierarchy and no auto-layout metadata.
 - `box-sizing: border-box` is global. The document body only declares `font-size: 14px`; typography is otherwise defined per text layer where exported.
 
+## Interaction rule: player nicknames
+
+- A player's nickname is always a clickable control, regardless of where it is rendered: in a header, profile, battle view, player list, or message text.
+- A click opens the standard player action menu used by chat (profile, private message where applicable, duel/exchange availability, and block controls where permitted).
+- The command `/n <nickname>` renders `<nickname>` as this same clickable player control rather than plain text.
+
 ## Root frame
 
 | Property | Exported value |

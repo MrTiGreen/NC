@@ -10,3 +10,13 @@ export const ChatDockStateContext = createContext<ChatDockState | null>(null);
 export function useChatDockState() {
   return useContext(ChatDockStateContext);
 }
+
+export type BattleNavigation = {
+  returnToBattle: () => void;
+};
+
+export const BattleNavigationContext = createContext<BattleNavigation | null>(null);
+
+export function useBattleNavigation() {
+  return useContext(BattleNavigationContext);
+}

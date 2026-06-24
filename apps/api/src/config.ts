@@ -17,9 +17,9 @@ const configSchema = z.object({
     .default("false")
     .transform((value) => value === "true"),
   DEV_TELEGRAM_ID: z.string().default("100000001"),
-  DEV_TELEGRAM_USERNAME: z.string().default("dev_user"),
-  DEV_TELEGRAM_FIRST_NAME: z.string().default("Dev"),
-  DEV_TELEGRAM_LAST_NAME: z.string().default("User"),
+  DEV_TELEGRAM_USERNAME: z.string().default("mrgreen"),
+  DEV_TELEGRAM_FIRST_NAME: z.string().default("MrGreen"),
+  DEV_TELEGRAM_LAST_NAME: z.string().default(""),
   DEV_TELEGRAM_AVATAR_URL: z.string().default(""),
   ADMIN_TELEGRAM_IDS: z.string().default(""),
   TELEGRAM_AUTH_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86400),

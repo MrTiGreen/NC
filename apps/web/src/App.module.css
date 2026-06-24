@@ -89,6 +89,125 @@
   color: #4fb26a;
 }
 
+.combatantPlayerNameTrigger {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #4fb26a;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(15px, 3.4vw, 23px);
+  font-weight: 800;
+  line-height: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 #000;
+  white-space: nowrap;
+}
+
+.combatantPlayerNameTrigger:hover,
+.combatantPlayerNameTrigger:focus-visible {
+  color: #7ed08a;
+  outline: none;
+  text-shadow: 0 0 12px rgba(83, 188, 105, 0.42);
+}
+
+.combatantBarsButton {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.combatantBarsButton:focus-visible {
+  outline: 1px solid rgba(214, 161, 95, 0.84);
+  outline-offset: 4px;
+}
+
+.combatantOpponentNameTrigger {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #d75b3f;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(15px, 3.4vw, 23px);
+  font-weight: 800;
+  line-height: 1;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 #000;
+  white-space: nowrap;
+}
+
+.combatantOpponentNameTrigger:hover,
+.combatantOpponentNameTrigger:focus-visible {
+  color: #ff9078;
+  outline: none;
+  text-shadow: 0 0 12px rgba(215, 91, 63, 0.5);
+}
+
+.headerPortraitMenuTrigger {
+  display: block;
+  width: 50px;
+  height: 50px;
+  overflow: hidden;
+  border: 1px solid #9a7520;
+  border-radius: 50%;
+  padding: 0;
+  background: #0d0a06;
+  cursor: pointer;
+}
+
+.headerPortraitMenuTrigger img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.headerPortraitMenuTrigger:hover,
+.headerPortraitMenuTrigger:focus-visible {
+  border-color: #fed580;
+  outline: none;
+  box-shadow: 0 0 10px rgba(214, 161, 95, 0.55);
+}
+
+.headerIdentityMenuTrigger {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #3f9d58;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerIdentityMenuTrigger:hover,
+.headerIdentityMenuTrigger:focus-visible {
+  color: #7ed08a;
+  outline: none;
+  text-shadow: 0 0 8px rgba(83, 188, 105, 0.45);
+}
+
 .combatantBar {
   display: block;
   height: 9px;
@@ -337,7 +456,7 @@
   z-index: 4;
   top: 0;
   bottom: auto;
-  height: 80%;
+  height: 65%;
   max-height: 100%;
   display: flex;
   width: 50%;
@@ -345,7 +464,8 @@
   min-width: 0;
   flex-direction: column;
   overflow: visible;
-  border: 1px solid rgba(201, 150, 42, 0.9);
+  border: 2px solid rgba(201, 150, 42, 0.9);
+  padding-inline: 4px;
   background:
     linear-gradient(180deg, rgba(14, 14, 11, 0.98), rgba(5, 7, 6, 0.98)),
     #0c0c0a;
@@ -454,6 +574,10 @@
   bottom: auto;
 }
 
+.gearDrawer .gearDrawerLabel {
+  display: none;
+}
+
 .gearDrawer[data-side="player"] .gearDrawerLabel {
   right: 0;
   left: auto;
@@ -487,17 +611,75 @@
 }
 
 .gearGrid {
+  --chain-gold: rgba(214, 168, 74, 0.72);
+  position: relative;
   display: grid;
   width: 100%;
   max-width: 100%;
-  height: min(314px, 62%);
+  height: min(361px, 71.3%);
   min-height: 0;
-  flex: 0 0 min(314px, 62%);
+  flex: 0 0 min(361px, 71.3%);
   box-sizing: border-box;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 5px;
-  padding: 0;
+  padding-block: 12px 10px;
   overflow: hidden;
+}
+
+.gearGrid::before,
+.gearGrid::after {
+  position: absolute;
+  z-index: 2;
+  right: 8px;
+  left: 8px;
+  height: 7px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 5px 3px at 4px 50%, transparent 0 38%, var(--chain-gold) 42% 58%, transparent 62%) 0 0 / 12px 7px repeat-x;
+  content: "";
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+  opacity: 0.82;
+}
+
+.gearGrid::before { top: 3px; }
+.gearGrid::after { bottom: 2px; transform: rotate(180deg); }
+
+.gearDrawer[data-motion="opening"] .gearGrid::before {
+  animation: gear-chain-top-open 420ms cubic-bezier(0.16, 0.88, 0.34, 1.08);
+}
+
+.gearDrawer[data-motion="opening"] .gearGrid::after {
+  animation: gear-chain-bottom-open 420ms cubic-bezier(0.16, 0.88, 0.34, 1.08);
+}
+
+.gearDrawer[data-motion="closing"] .gearGrid::before {
+  animation: gear-chain-top-close 280ms cubic-bezier(0.58, 0, 0.82, 0.35);
+}
+
+.gearDrawer[data-motion="closing"] .gearGrid::after {
+  animation: gear-chain-bottom-close 280ms cubic-bezier(0.58, 0, 0.82, 0.35);
+}
+
+@keyframes gear-chain-top-open {
+  0% { opacity: 0; transform: translateX(-20px) rotate(-2deg); }
+  70% { opacity: 1; transform: translateX(4px) rotate(1deg); }
+  100% { opacity: 0.82; transform: translateX(0) rotate(0); }
+}
+
+@keyframes gear-chain-bottom-open {
+  0% { opacity: 0; transform: translateX(20px) rotate(182deg); }
+  70% { opacity: 1; transform: translateX(-4px) rotate(179deg); }
+  100% { opacity: 0.82; transform: translateX(0) rotate(180deg); }
+}
+
+@keyframes gear-chain-top-close {
+  0% { opacity: 0.82; transform: translateX(0) rotate(0); }
+  100% { opacity: 0; transform: translateX(-18px) rotate(-3deg); }
+}
+
+@keyframes gear-chain-bottom-close {
+  0% { opacity: 0.82; transform: translateX(0) rotate(180deg); }
+  100% { opacity: 0; transform: translateX(18px) rotate(183deg); }
 }
 
 .gearGridPanel {
@@ -567,9 +749,8 @@
 }
 
 .gearDrawerStats dl div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px;
+  position: relative;
+  display: block;
 }
 
 .gearDrawerStats dt,
@@ -580,6 +761,10 @@
 }
 
 .gearDrawerStats dd {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   color: #e8dcc4;
   font-size: 12px;
   font-weight: 700;
@@ -1045,6 +1230,32 @@
   align-items: stretch;
   background: #060706;
   pointer-events: auto;
+}
+
+.profileOverlayClose {
+  position: absolute;
+  z-index: 22;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid rgba(154, 117, 32, 0.55);
+  border-radius: 4px;
+  padding: 0;
+  background: rgba(13, 10, 6, 0.88);
+  color: #d6a84a;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.profileOverlayClose:hover,
+.profileOverlayClose:focus-visible {
+  border-color: #fed580;
+  color: #fed580;
+  outline: none;
 }
 
 @media (min-width: 431px) and (min-height: 560px) {

@@ -7,7 +7,7 @@ import {
   type RefObject
 } from "react";
 import styles from "./ChatPanel.module.css";
-import { useChatDockState } from "./ChatDockState";
+import { useBattleNavigation, useChatDockState } from "./ChatDockState";
 
 export type ChatPanelTab<TTab extends string> = {
   value: TTab;
@@ -41,6 +41,7 @@ export function ChatPanel<TTab extends string>({
   tone
 }: ChatPanelProps<TTab>) {
   const dockState = useChatDockState();
+  const battleNavigation = useBattleNavigation();
   const isCollapsed = dockState?.collapsed ?? false;
   const battleTab = "battle" as TTab;
 
@@ -117,7 +118,10 @@ export function ChatPanel<TTab extends string>({
             data-action="battle"
             title="Бой: лог боя"
             type="button"
-            onClick={() => onTabChange(battleTab)}
+            onClick={() => {
+              onTabChange(battleTab);
+              battleNavigation?.returnToBattle();
+            }}
           >
             <span aria-hidden="true">⚔</span>
           </button>

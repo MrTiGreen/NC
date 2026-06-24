@@ -39,7 +39,7 @@ import {
 import { CharacterPage } from "./components/character/CharacterPage";
 import { CharacterHeader } from "./components/character/CharacterHeader";
 import { characterPageData } from "./components/character/characterData";
-import { ChatDockStateContext } from "./components/chat-panel/ChatDockState";
+import { BattleNavigationContext, ChatDockStateContext } from "./components/chat-panel/ChatDockState";
 import styles from "./App.module.css";
 
 type Status = "loading" | "ready" | "error";
@@ -98,6 +98,10 @@ export function App() {
 
   const userById = useMemo(() => new Map(users.map((user) => [user.id, user])), [users]);
   const knownUsers = useMemo(() => (me ? [me, ...users] : users), [me, users]);
+  const battleOpponent = useMemo(
+    () => users.find((user) => displayName(user).trim().toLocaleLowerCase("ru-RU") === "mrred"),
+    [users]
+  );
   const blockedUserIdSet = useMemo(() => new Set(blockedUserIds), [blockedUserIds]);
   const openUserProfile = useCallback((user: PublicUserDto | CurrentUserDto) => {
     setProfileOpen(false);
@@ -312,6 +316,15 @@ export function App() {
       value={{ currentUserId: me?.id ?? 0, isAdmin: me?.role === "ADMIN", onModerate: moderateChatUser }}
     >
     <ChatDockStateContext.Provider value={{ collapsed: chatCollapsed, setCollapsed: setChatCollapsed }}>
+    <BattleNavigationContext.Provider
+      value={{
+        returnToBattle: () => {
+          setProfileOpen(false);
+          setSelectedProfile(null);
+          setActivePanel("battle");
+        }
+      }}
+    >
     <div
       className={styles.app}
       data-chat-collapsed={chatCollapsed || undefined}
@@ -322,36 +335,83 @@ export function App() {
         <CharacterHeader
           characterName={me ? displayName(me) : "MrGreen"}
           data={characterPageData}
-          onClose={() => {
-            if (profileOpen) {
-              setProfileOpen(false);
-            } else {
-              setSelectedProfile(null);
-            }
-          }}
+          portraitControl={
+            me ? (
+              <UserActionName
+                user={me}
+                canBlock={false}
+                onOpenProfile={() => {
+                  setSelectedProfile(null);
+                  setProfileOpen(true);
+                }}
+                trigger={<img src="/assets/character-page/portrait.png" alt="Открыть действия героя" />}
+                triggerClassName={styles.headerPortraitMenuTrigger}
+              />
+            ) : undefined
+          }
+          identityControl={
+            me ? (
+              <UserActionName
+                user={me}
+                canBlock={false}
+                onOpenProfile={() => {
+                  setSelectedProfile(null);
+                  setProfileOpen(true);
+                }}
+                triggerClassName={styles.headerIdentityMenuTrigger}
+              />
+            ) : undefined
+          }
         />
       </header>
       ) : (
       <header className={styles.header}>
-        <button
-          aria-label="Открыть профиль"
-          className={`${styles.combatantHeader} ${styles.combatantHeaderPlayer}`}
-          type="button"
-          onClick={() => {
-            setSelectedProfile(null);
-            setProfileOpen(true);
-          }}
-        >
-          <span className={styles.combatantName}>{me ? displayName(me) : "MrGreen"}</span>
+        <div className={`${styles.combatantHeader} ${styles.combatantHeaderPlayer}`}>
+          {me ? (
+            <UserActionName
+              user={me}
+              canBlock={false}
+              onOpenProfile={() => {
+                setSelectedProfile(null);
+                setProfileOpen(true);
+              }}
+              trigger="MrGreen"
+              triggerClassName={styles.combatantPlayerNameTrigger}
+            />
+          ) : (
+            <span className={styles.combatantName}>MrGreen</span>
+          )}
+          <button
+            aria-label="Открыть профиль"
+            className={styles.combatantBarsButton}
+            type="button"
+            onClick={() => {
+              setSelectedProfile(null);
+              setProfileOpen(true);
+            }}
+          >
           <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
           <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
-        </button>
+          </button>
+        </div>
         <div className={styles.roundStatus}>
           <p>Таймер хода</p>
           <h1>00:10</h1>
         </div>
-        <div className={`${styles.combatantHeader} ${styles.combatantHeaderEnemy}`} aria-label="Противник Gestiya">
-          <span className={styles.combatantName}>Gestiya</span>
+        <div className={`${styles.combatantHeader} ${styles.combatantHeaderEnemy}`} aria-label="Противник MrRed">
+          {battleOpponent ? (
+            <UserActionName
+              user={battleOpponent}
+              isBlocked={blockedUserIdSet.has(battleOpponent.id)}
+              canBlock={battleOpponent.id !== me?.id}
+              onOpenProfile={openUserProfile}
+              onPrivateReply={openPrivateDialog}
+              onToggleBlockedUser={toggleBlockedUser}
+              triggerClassName={styles.combatantOpponentNameTrigger}
+            />
+          ) : (
+            <span className={styles.combatantName}>MrRed</span>
+          )}
           <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
           <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
         </div>
@@ -381,6 +441,7 @@ export function App() {
               canBlock={selectedProfile.id !== me?.id}
               onBack={() => setSelectedProfile(null)}
               onToggleBlockedUser={toggleBlockedUser}
+              onOpenPrivateDialog={openPrivateDialog}
             />
           </div>
         )}
@@ -492,6 +553,7 @@ export function App() {
           </section>
       </main>
     </div>
+    </BattleNavigationContext.Provider>
     </ChatDockStateContext.Provider>
     </AdminControlsContext.Provider>
   );
@@ -1438,6 +1500,7 @@ function PublicChat({
               currentUserId={currentUserId}
               publicMessages={messages}
               privateMessages={privateMessages}
+              users={users}
               blockedUserIds={blockedUserIds}
               onPrivateReply={onOpenPrivateDialog}
               onOpenUserProfile={onOpenUserProfile}
@@ -1695,6 +1758,7 @@ function MainMessageList({
   currentUserId,
   publicMessages,
   privateMessages,
+  users,
   blockedUserIds,
   onPrivateReply,
   onOpenUserProfile,
@@ -1703,6 +1767,7 @@ function MainMessageList({
   currentUserId: number;
   publicMessages: PublicMessageDto[];
   privateMessages: PrivateMessageDto[];
+  users: PublicUserDto[];
   blockedUserIds: Set<number>;
   onPrivateReply: (user: PublicUserDto) => void;
   onOpenUserProfile: (user: PublicUserDto) => void;
@@ -1738,7 +1803,15 @@ function MainMessageList({
               key={`public-${message.id}`}
               time={formatTime(message.createdAt)}
             >
-              {message.text}
+              <NicknameCommandText
+                text={message.text}
+                users={users}
+                currentUserId={currentUserId}
+                blockedUserIds={blockedUserIds}
+                onOpenProfile={onOpenUserProfile}
+                onPrivateReply={onPrivateReply}
+                onToggleBlockedUser={onToggleBlockedUser}
+              />
             </ChatMessage>
           );
         }
@@ -1779,7 +1852,15 @@ function MainMessageList({
             time={formatTime(message.createdAt)}
             tone="private"
           >
-            {message.text}
+            <NicknameCommandText
+              text={message.text}
+              users={[message.sender, message.receiver]}
+              currentUserId={currentUserId}
+              blockedUserIds={blockedUserIds}
+              onOpenProfile={onOpenUserProfile}
+              onPrivateReply={onPrivateReply}
+              onToggleBlockedUser={onToggleBlockedUser}
+            />
           </ChatMessage>
         );
       })}
@@ -1885,7 +1966,15 @@ function GuildChatPanel({
                   key={message.id}
                   time={formatTime(message.createdAt)}
                 >
-                  {message.text}
+                  <NicknameCommandText
+                    text={message.text}
+                    users={guildmates}
+                    currentUserId={currentUserId}
+                    blockedUserIds={blockedUserIds}
+                    onOpenProfile={onOpenUserProfile}
+                    onPrivateReply={onOpenPrivateDialog}
+                    onToggleBlockedUser={onToggleBlockedUser}
+                  />
                 </ChatMessage>
               ))}
             </ChatMessageList>
@@ -2002,11 +2091,55 @@ function PrivateMessageList({
             time={formatTime(message.createdAt)}
             tone="private"
           >
-            {message.text}
+            <NicknameCommandText
+              text={message.text}
+              users={[message.sender, message.receiver]}
+              currentUserId={currentUserId}
+              blockedUserIds={blockedUserIds}
+              onOpenProfile={onOpenUserProfile}
+              onToggleBlockedUser={onToggleBlockedUser}
+            />
           </ChatMessage>
         );
       })}
     </ChatMessageList>
+  );
+}
+
+function NicknameCommandText({
+  text,
+  users,
+  currentUserId,
+  blockedUserIds,
+  onOpenProfile,
+  onPrivateReply,
+  onToggleBlockedUser
+}: {
+  text: string;
+  users: PublicUserDto[];
+  currentUserId: number;
+  blockedUserIds: Set<number>;
+  onOpenProfile: (user: PublicUserDto) => void;
+  onPrivateReply?: (user: PublicUserDto) => void;
+  onToggleBlockedUser: (user: PublicUserDto) => void | Promise<void>;
+}) {
+  const command = parseNicknameCommand(text, users);
+  if (!command?.user) {
+    return text;
+  }
+
+  return (
+    <>
+      <UserActionName
+        user={command.user}
+        isBlocked={blockedUserIds.has(command.user.id)}
+        canBlock={command.user.id !== currentUserId}
+        onOpenProfile={onOpenProfile}
+        onPrivateReply={onPrivateReply}
+        onToggleBlockedUser={onToggleBlockedUser}
+      />
+      {command.text && ` ${command.text}`}
+    </>
   );
 }
 
@@ -2016,7 +2149,9 @@ function UserActionName({
   canBlock = true,
   onOpenProfile,
   onPrivateReply,
-  onToggleBlockedUser
+  onToggleBlockedUser,
+  trigger,
+  triggerClassName
 }: {
   user: PublicUserDto;
   isBlocked?: boolean;
@@ -2024,6 +2159,8 @@ function UserActionName({
   onOpenProfile?: (user: PublicUserDto) => void;
   onPrivateReply?: (user: PublicUserDto) => void;
   onToggleBlockedUser?: (user: PublicUserDto) => void | Promise<void>;
+  trigger?: React.ReactNode;
+  triggerClassName?: string;
 }) {
   const adminControls = useContext(AdminControlsContext);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -2031,6 +2168,7 @@ function UserActionName({
   const timerRef = useRef<number | null>(null);
   const menuRef = useRef<HTMLSpanElement | null>(null);
   const portalMenuRef = useRef<HTMLSpanElement | null>(null);
+  const menuIdRef = useRef(`user-action-menu-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -2051,6 +2189,17 @@ function UserActionName({
     return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
   }, [menuOpen]);
 
+  useEffect(() => {
+    function closeWhenAnotherMenuOpens(event: Event) {
+      if ((event as CustomEvent<string>).detail !== menuIdRef.current) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("player-menu:open", closeWhenAnotherMenuOpens);
+    return () => document.removeEventListener("player-menu:open", closeWhenAnotherMenuOpens);
+  }, []);
+
   function openMenu() {
     const rect = menuRef.current?.getBoundingClientRect();
     if (rect) {
@@ -2059,6 +2208,7 @@ function UserActionName({
         top: Math.min(rect.bottom + 6, window.innerHeight - 96)
       });
     }
+    document.dispatchEvent(new CustomEvent("player-menu:open", { detail: menuIdRef.current }));
     setMenuOpen(true);
   }
 
@@ -2089,7 +2239,7 @@ function UserActionName({
   return (
     <span className={styles.userAction} ref={menuRef}>
       <button
-        className={styles.userNameButton}
+        className={triggerClassName ?? styles.userNameButton}
         type="button"
         onContextMenu={(event) => {
           event.preventDefault();
@@ -2117,7 +2267,7 @@ function UserActionName({
           }
         }}
       >
-        {displayName(user)}
+        {trigger ?? displayName(user)}
       </button>
       {menuOpen &&
         createPortal(
@@ -2224,7 +2374,8 @@ function HeroProfile({
   isBlocked = false,
   canBlock = true,
   onBack,
-  onToggleBlockedUser
+  onToggleBlockedUser,
+  onOpenPrivateDialog
 }: {
   user: PublicUserDto | CurrentUserDto;
   playerProfile: PlayerProfileDto | null;
@@ -2233,8 +2384,36 @@ function HeroProfile({
   canBlock?: boolean;
   onBack: () => void;
   onToggleBlockedUser?: (user: PublicUserDto) => void | Promise<void>;
+  onOpenPrivateDialog?: (user: PublicUserDto) => void;
 }) {
-  return <CharacterPage characterName={displayName(user)} />;
+  return (
+    <>
+      <button className={styles.profileOverlayClose} type="button" aria-label="Закрыть информацию героя" onClick={onBack}>
+        ×
+      </button>
+      <CharacterPage
+        characterName={displayName(user)}
+        profileUser={user}
+        isBlocked={isBlocked}
+        canBlock={canBlock}
+        onOpenPrivate={
+          onOpenPrivateDialog && !("telegramId" in user)
+            ? () => {
+                onBack();
+                onOpenPrivateDialog(user);
+              }
+            : undefined
+        }
+        onToggleBlocked={
+          onToggleBlockedUser && !("telegramId" in user)
+            ? () => {
+                void onToggleBlockedUser(user);
+              }
+            : undefined
+        }
+      />
+    </>
+  );
 }
 
 function OnlineSplitView({
@@ -2615,6 +2794,18 @@ function parsePrivateCommand(text: string, users: PublicUserDto[]) {
     nick: match[1],
     text: messageText,
     user
+  };
+}
+
+function parseNicknameCommand(text: string, users: PublicUserDto[]) {
+  const match = text.match(/^\/n\s+(\S+)(?:\s+([\s\S]+))?$/i);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    user: users.find((candidate) => userMatchesNick(candidate, normalizeNick(match[1]))),
+    text: match[2]?.trim() ?? ""
   };
 }
 
