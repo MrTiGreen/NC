@@ -13,9 +13,8 @@
   --asset-line: #2b2720;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 720px;
-  height: 100dvh;
+  width: min(100vw, 430px);
+  height: min(100dvh, 932px);
   margin: 0 auto;
   overflow: hidden;
   border-inline: 1px solid rgba(139, 87, 44, 0.36);
@@ -39,6 +38,12 @@
     linear-gradient(180deg, rgba(6, 8, 7, 0.98), rgba(12, 13, 11, 0.88)),
     radial-gradient(circle at 50% 0, rgba(214, 161, 95, 0.14), transparent 58%),
     #0b0b0a;
+}
+
+.sharedPageHeader {
+  position: relative;
+  z-index: 21;
+  flex: 0 0 auto;
 }
 
 .combatantHeader {
@@ -184,7 +189,7 @@
 
 .chatPage {
   position: absolute;
-  z-index: 2;
+  z-index: 20;
   inset: 0;
   display: flex;
   width: 100%;
@@ -485,43 +490,99 @@
   display: grid;
   width: 100%;
   max-width: 100%;
-  height: 100%;
+  height: min(314px, 62%);
   min-height: 0;
-  max-height: 100%;
-  flex: 1 1 0;
+  flex: 0 0 min(314px, 62%);
   box-sizing: border-box;
-  grid-template-areas:
-    "earring-left earring-left earring-left earring-right earring-right earring-right helmet helmet helmet helmet helmet helmet"
-    "amulet amulet amulet amulet amulet amulet helmet helmet helmet helmet helmet helmet"
-    "weapon weapon weapon weapon weapon weapon bracers bracers bracers bracers bracers bracers"
-    "weapon weapon weapon weapon weapon weapon gloves gloves gloves gloves gloves gloves"
-    "weapon weapon weapon weapon weapon weapon quick-one quick-one quick-two quick-two quick-three quick-three"
-    "armor armor armor armor armor armor belt belt belt belt belt belt"
-    "armor armor armor armor armor armor shield shield shield shield shield shield"
-    "armor armor armor armor armor armor shield shield shield shield shield shield"
-    "pants pants pants pants pants pants shield shield shield shield shield shield"
-    "pants pants pants pants pants pants boots boots boots boots boots boots"
-    "pants pants pants pants pants pants boots boots boots boots boots boots";
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: minmax(0, 1.25fr) repeat(10, minmax(0, 1fr));
-  gap: clamp(2px, 0.8vw, 6px);
-  padding: clamp(2px, 0.8vw, 6px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 0;
   overflow: hidden;
 }
 
-.gearDrawer[data-side="enemy"] .gearGrid {
+.gearGridPanel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.gearSlotStack {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 5px;
+}
+
+.gearSlotStack[data-side="left"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-areas:
-    "helmet helmet helmet helmet helmet helmet earring-right earring-right earring-right earring-left earring-left earring-left"
-    "helmet helmet helmet helmet helmet helmet amulet amulet amulet amulet amulet amulet"
-    "bracers bracers bracers bracers bracers bracers weapon weapon weapon weapon weapon weapon"
-    "gloves gloves gloves gloves gloves gloves weapon weapon weapon weapon weapon weapon"
-    "quick-three quick-three quick-two quick-two quick-one quick-one weapon weapon weapon weapon weapon weapon"
-    "belt belt belt belt belt belt armor armor armor armor armor armor"
-    "shield shield shield shield shield shield armor armor armor armor armor armor"
-    "shield shield shield shield shield shield armor armor armor armor armor armor"
-    "shield shield shield shield shield shield pants pants pants pants pants pants"
-    "boots boots boots boots boots boots pants pants pants pants pants pants"
-    "boots boots boots boots boots boots pants pants pants pants pants pants";
+    "earring-left earring-right"
+    "amulet amulet"
+    "weapon weapon"
+    "armor armor"
+    "pants pants";
+  grid-template-rows: 25fr 20fr 77fr 83fr 75fr;
+}
+
+.gearSlotStack[data-side="right"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "helmet helmet helmet"
+    "bracers bracers bracers"
+    "gloves gloves gloves"
+    "quick-one quick-two quick-three"
+    "belt belt belt"
+    "shield shield shield"
+    "boots boots boots";
+  grid-template-rows: 50fr 28fr 39fr 22fr 25fr 83fr 37fr;
+}
+
+.gearDrawerStats {
+  min-height: 0;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border-top: 1px solid rgba(154, 117, 32, 0.42);
+  padding-top: 7px;
+  color: #a58a5c;
+}
+
+.gearDrawerStats h3 {
+  margin: 0 0 5px;
+  color: #d6a84a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.gearDrawerStats dl {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.gearDrawerStats dl div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+
+.gearDrawerStats dt,
+.gearDrawerStats dd {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.gearDrawerStats dd {
+  color: #e8dcc4;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .gearSlot {
@@ -529,16 +590,12 @@
   min-width: 0;
   min-height: 0;
   place-items: center;
-  border: 2px solid #a77a06;
-  border-radius: 11px;
-  padding: 4px;
-  background:
-    linear-gradient(135deg, rgba(208, 160, 49, 0.05), transparent 44%),
-    #100e0b;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.86),
-    0 0 12px rgba(0, 0, 0, 0.22);
-  color: inherit;
+  border: 1px solid rgba(154, 117, 32, 0.32);
+  border-radius: 0;
+  padding: 2px;
+  background: #130f0a;
+  box-shadow: none;
+  color: #a58a5c;
   font: inherit;
   text-align: inherit;
 }
@@ -550,27 +607,23 @@
 
 .gearSlot[data-has-item="true"]:hover,
 .gearSlot[data-has-item="true"]:focus-visible {
-  border-color: #e7be63;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 231, 161, 0.3),
-    0 0 14px rgba(222, 174, 69, 0.3);
+  border-color: #d6a84a;
+  box-shadow: none;
   outline: none;
 }
 
 .gearSlot[data-selected="true"] {
-  border-color: #fff0a9;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 242, 182, 0.46),
-    0 0 18px rgba(237, 194, 83, 0.58);
-  transform: scale(1.025);
+  border-color: #f0c56f;
+  box-shadow: inset 0 0 0 1px rgba(245, 211, 133, 0.22);
+  transform: none;
 }
 
 .gearItemGlyph {
-  color: #edc96d;
-  font-size: clamp(17px, 4.6vw, 29px);
+  color: #d6a84a;
+  font-size: clamp(10px, 2.8vw, 16px);
   font-weight: 700;
   line-height: 1;
-  text-shadow: 0 1px 0 #000;
+  text-shadow: none;
 }
 
 .gearSlot[data-slot="earring-left"] { grid-area: earring-left; }
@@ -628,6 +681,15 @@
   box-sizing: border-box;
   align-self: center;
   justify-self: center;
+}
+
+.gearSlot[data-slot^="earring-"],
+.gearSlot[data-slot^="quick-"] {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  align-self: stretch;
+  justify-self: stretch;
 }
 
 .gearItemCard[data-rarity="epic"] {
@@ -973,6 +1035,25 @@
 
 .topProfile .profile::-webkit-scrollbar {
   display: none;
+}
+
+.figmaProfileOverlay {
+  top: 0;
+  right: 0;
+  bottom: var(--chat-height);
+  left: 0;
+  align-items: stretch;
+  background: #060706;
+  pointer-events: auto;
+}
+
+@media (min-width: 431px) and (min-height: 560px) {
+  .app {
+    width: min(430px, calc((100dvh - 32px) * 430 / 932));
+    height: min(932px, calc(100dvh - 32px));
+    margin-block: auto;
+    box-shadow: 0 0 0 1px rgba(139, 87, 44, 0.36), 0 24px 72px rgba(0, 0, 0, 0.58);
+  }
 }
 
 .listScreen,
@@ -1514,6 +1595,218 @@
   font-size: 12px;
   font-weight: 800;
 }
+
+.heroProfile {
+  display: block;
+  gap: 0;
+  padding: 11px 18px 28px;
+  background: #050705;
+  text-align: left;
+}
+
+.heroProfileTitle {
+  display: flex;
+  min-height: 46px;
+  align-items: start;
+  justify-content: center;
+  gap: 14px;
+  padding-inline: 32px;
+}
+
+.heroProfileTitle h2 {
+  color: #34a958;
+  font-size: clamp(22px, 6vw, 36px);
+  line-height: 1;
+}
+
+.heroProfileTitle h2 span {
+  font-weight: 500;
+}
+
+.heroProfileTitle p {
+  margin: 0;
+  color: #a58a5c;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.heroProfileTitle p b { color: #b98b2b; }
+
+.profileBack {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  right: 10px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  background: none;
+  color: #d5a943;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.heroProfileOverview {
+  display: grid;
+  grid-template-columns: minmax(62px, 0.7fr) minmax(112px, 1.1fr) minmax(74px, 0.78fr) minmax(132px, 1.25fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.heroEquipment {
+  display: grid;
+  gap: 7px;
+}
+
+.heroEquipment > span,
+.heroAccessorySlots span,
+.heroProfileQuickSlots span {
+  display: grid;
+  min-height: 39px;
+  place-items: center;
+  border: 2px solid #a87c12;
+  border-radius: 11px;
+  color: #9b7a42;
+  font-size: 12px;
+}
+
+.heroEquipment[data-side="left"] { grid-template-columns: 1fr 1fr; }
+.heroEquipment[data-side="left"] .heroEquipmentLarge { grid-column: 1 / -1; min-height: 111px; }
+.heroEquipment[data-side="right"] > span { min-height: 59px; }
+.heroEquipment[data-side="right"] > span:nth-last-child(2) { min-height: 112px; }
+
+.heroAccessorySlots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.heroAccessorySlots span { min-height: 36px; }
+
+.heroPortrait {
+  display: grid;
+  min-height: 318px;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: radial-gradient(ellipse at 50% 44%, rgba(120, 25, 29, 0.3), transparent 60%);
+}
+
+.heroProfile .heroPortrait .avatar {
+  width: 104px;
+  height: 104px;
+  border: 2px solid #a77c16;
+  font-size: 38px;
+}
+
+.heroPortrait > span {
+  max-width: 100%;
+  overflow: hidden;
+  color: #a48659;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heroProfileStats {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  margin: 0;
+}
+
+.heroProfileStats div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.heroProfileStats dt {
+  color: #a58a5c;
+  font-size: clamp(16px, 4.8vw, 26px);
+  line-height: 1.08;
+}
+
+.heroProfileStats dd {
+  color: #f6f2e7;
+  font-size: clamp(18px, 5.2vw, 30px);
+  font-weight: 700;
+  text-align: right;
+}
+
+.heroProfileQuickSlots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 12px;
+}
+
+.heroProfileQuickSlots div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.heroProfileQuickSlots b { grid-column: 1 / -1; color: #d3a943; font-size: 16px; text-align: center; }
+.heroProfileQuickSlots span { min-height: 47px; }
+.heroProfileMerits { margin: 17px 0 9px; color: #a58a5c; font-size: 18px; }
+
+.heroProfileTabs { display: flex; gap: 10px; }
+.heroProfileTabs button {
+  min-height: 36px;
+  border: 2px solid #a87c12;
+  border-radius: 9px;
+  padding: 0 13px;
+  background: #13120d;
+  color: #a58a5c;
+  font: inherit;
+  font-size: clamp(13px, 4.4vw, 22px);
+}
+.heroProfileTabs button[data-active="true"] { color: #f1d377; border-color: #f1c95e; text-decoration: underline; }
+
+.heroProfileAbout { margin-top: 12px; color: #a58a5c; font-size: clamp(14px, 4.5vw, 20px); line-height: 1.22; }
+.heroProfileAbout h3, .heroProfileAbout p { margin: 0 0 10px; }
+.heroProfileAbout h3 { font-size: inherit; font-weight: 500; }
+
+.heroProfileLoading,
+.heroProfileEmpty {
+  width: 100%;
+  margin: 0;
+  border: 1px solid rgba(139, 87, 44, 0.42);
+  padding: 16px;
+  background: rgba(14, 13, 11, 0.74);
+  color: var(--asset-muted);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.heroProfileEmpty h3,
+.heroProfileEmpty p {
+  margin: 0;
+}
+
+.heroProfileEmpty h3 {
+  color: var(--asset-gold);
+  font-size: 14px;
+}
+
+.heroProfileEmpty p {
+  margin-top: 7px;
+  font-size: 12px;
+}
+
+.heroProfileServices {
+  display: grid;
+  grid-template-columns: 1fr 1.45fr;
+  gap: 22px;
+  margin-top: 12px;
+  border-top: 2px solid #927339;
+  padding-top: 9px;
+  color: #a58a5c;
+  font-size: clamp(12px, 3.9vw, 18px);
+  line-height: 1.25;
+}
+
+.heroProfileServices p { margin: 0; }
+.heroProfileServices b { color: #b39865; }
 
 .profile .avatar {
   width: 72px;

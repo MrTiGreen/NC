@@ -7,6 +7,7 @@ import {
   type RefObject
 } from "react";
 import styles from "./ChatPanel.module.css";
+import { useChatDockState } from "./ChatDockState";
 
 export type ChatPanelTab<TTab extends string> = {
   value: TTab;
@@ -39,39 +40,97 @@ export function ChatPanel<TTab extends string>({
   loadingText,
   tone
 }: ChatPanelProps<TTab>) {
-  const isCollapsed = Boolean(height && height <= 10);
+  const dockState = useChatDockState();
+  const isCollapsed = dockState?.collapsed ?? false;
+  const battleTab = "battle" as TTab;
 
   return (
     <section
       className={styles.panel}
       data-collapsed={isCollapsed || undefined}
       data-panel={tone ?? activeTab}
-      style={height ? ({ "--chat-panel-height": `${height}dvh` } as CSSProperties) : undefined}
+      style={
+        {
+          "--chat-panel-height": height ? `${height}%` : undefined,
+          "--chat-tab-count": tabs.length
+        } as CSSProperties
+      }
     >
       <div className={styles.resizeZone}>
-        {height && onHeightChange && <ChatResizeHandle value={height} onChange={onHeightChange} />}
+        {height && onHeightChange && (
+          <ChatResizeHandle
+            collapsed={isCollapsed}
+            value={height}
+            onChange={onHeightChange}
+            onCollapse={() => dockState?.setCollapsed(true)}
+            onExpand={() => dockState?.setCollapsed(false)}
+          />
+        )}
+        {dockState && (
+          <button
+            aria-expanded={!isCollapsed}
+            aria-label={isCollapsed ? "Развернуть нижнюю панель" : "Свернуть нижнюю панель"}
+            className={styles.collapseToggle}
+            data-no-pager-drag="true"
+            type="button"
+            onClick={() => {
+              if (isCollapsed) {
+                onHeightChange?.(35);
+                dockState.setCollapsed(false);
+                return;
+              }
+
+              dockState.setCollapsed(true);
+            }}
+          >
+            <span aria-hidden="true">{isCollapsed ? "+" : "−"}</span>
+          </button>
+        )}
       </div>
       {backAction && (
         <div className={styles.backAction} data-no-pager-drag="true">
           {backAction}
         </div>
       )}
-      <div className={styles.tabs} data-no-pager-drag="true">
-        {tabs.map((tab) => (
+      <div className={styles.topMenu} data-no-pager-drag="true">
+        <div className={styles.tabs}>
+          {tabs.map((tab) => (
+            <button
+              className={[
+                activeTab === tab.value ? styles.activeTab : "",
+                tab.tone === "back" ? styles.backTab : ""
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              key={tab.value}
+              type="button"
+              onClick={() => onTabChange(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.gameActions} aria-label="Игровые действия">
           <button
-            className={[
-              activeTab === tab.value ? styles.activeTab : "",
-              tab.tone === "back" ? styles.backTab : ""
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            key={tab.value}
+            aria-label="Бой: открыть лог"
+            className={styles.gameAction}
+            data-action="battle"
+            title="Бой: лог боя"
             type="button"
-            onClick={() => onTabChange(tab.value)}
+            onClick={() => onTabChange(battleTab)}
           >
-            {tab.label}
+            <span aria-hidden="true">⚔</span>
           </button>
-        ))}
+          <button aria-label="Карта" className={styles.gameAction} data-action="map" title="Карта" type="button">
+            <span aria-hidden="true">⌘</span>
+          </button>
+          <button aria-label="Настройки" className={styles.gameAction} data-action="settings" title="Настройки" type="button">
+            <span aria-hidden="true">⚙</span>
+          </button>
+          <button aria-label="Инвентарь" className={styles.gameAction} data-action="inventory" title="Инвентарь" type="button">
+            <span aria-hidden="true">▣</span>
+          </button>
+        </div>
       </div>
       {loadingText && <p className={styles.loading}>{loadingText}</p>}
       {children}
@@ -215,27 +274,75 @@ export function LogPanel({ entries, emptyText = "Записей пока нет.
   );
 }
 
-function ChatResizeHandle({ value, onChange }: { value: number; onChange: (value: number) => void }) {
-  const startRef = useRef<{ pointerY: number; value: number } | null>(null);
+function ChatResizeHandle({
+  collapsed,
+  value,
+  onChange,
+  onCollapse,
+  onExpand
+}: {
+  collapsed: boolean;
+  value: number;
+  onChange: (value: number) => void;
+  onCollapse: () => void;
+  onExpand: () => void;
+}) {
+  const startRef = useRef<{ pointerY: number; value: number; collapsed: boolean; expanded: boolean } | null>(null);
+  const [collapseArmed, setCollapseArmed] = useState(false);
 
-  function updateHeight(pointerY: number) {
-    if (!startRef.current) {
+  function updateHeight(pointerY: number, finish = false) {
+    const start = startRef.current;
+    if (!start) {
       return;
     }
 
-    const deltaPercent = ((startRef.current.pointerY - pointerY) / window.innerHeight) * 100;
-    onChange(Math.round(startRef.current.value + deltaPercent));
+    let deltaPixels = start.pointerY - pointerY;
+
+    if (start.collapsed && !start.expanded) {
+      if (deltaPixels < 12) {
+        return;
+      }
+
+      start.expanded = true;
+      start.pointerY = pointerY;
+      start.value = 35;
+      onChange(35);
+      onExpand();
+      deltaPixels = 0;
+    }
+
+    const deltaPercent = (deltaPixels / window.innerHeight) * 100;
+    const nextValue = Math.round(start.value + deltaPercent);
+    const shouldCollapse = nextValue <= 10;
+
+    setCollapseArmed(shouldCollapse);
+
+    if (finish && shouldCollapse) {
+      onCollapse();
+      return;
+    }
+
+    if (!shouldCollapse) {
+      onChange(nextValue);
+    }
   }
 
   return (
     <button
       aria-label="Изменить высоту чата"
       className={styles.resizeHandle}
+      data-collapse-armed={collapseArmed || undefined}
       data-no-pager-drag="true"
       type="button"
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId);
-        startRef.current = { pointerY: event.clientY, value };
+        startRef.current = {
+          pointerY: event.clientY,
+          value: collapsed ? 35 : value,
+          collapsed,
+          expanded: false
+        };
+        setCollapseArmed(false);
       }}
       onPointerMove={(event) => {
         if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -243,15 +350,17 @@ function ChatResizeHandle({ value, onChange }: { value: number; onChange: (value
         }
       }}
       onPointerUp={(event) => {
-        updateHeight(event.clientY);
+        updateHeight(event.clientY, true);
         event.currentTarget.releasePointerCapture(event.pointerId);
         startRef.current = null;
+        setCollapseArmed(false);
       }}
       onPointerCancel={(event) => {
         if (event.currentTarget.hasPointerCapture(event.pointerId)) {
           event.currentTarget.releasePointerCapture(event.pointerId);
         }
         startRef.current = null;
+        setCollapseArmed(false);
       }}
     >
       <span />

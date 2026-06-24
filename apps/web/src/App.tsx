@@ -5,6 +5,7 @@ import type {
   CurrentUserDto,
   DialogDto,
   PrivateMessageDto,
+  PlayerProfileDto,
   PublicMessageDto,
   PublicUserDto
 } from "@telegram-mini-chat/shared";
@@ -13,6 +14,7 @@ import {
   blockUser,
   getDialogs,
   getGuildMessages,
+  getPlayerProfile,
   getPrivateFeedMessages,
   getPrivateMessages,
   getPublicMessages,
@@ -34,6 +36,10 @@ import {
   type ChatPanelTab,
   type LogPanelEntry
 } from "./components/chat-panel";
+import { CharacterPage } from "./components/character/CharacterPage";
+import { CharacterHeader } from "./components/character/CharacterHeader";
+import { characterPageData } from "./components/character/characterData";
+import { ChatDockStateContext } from "./components/chat-panel/ChatDockState";
 import styles from "./App.module.css";
 
 type Status = "loading" | "ready" | "error";
@@ -53,10 +59,9 @@ type AdminControls = {
 const AdminControlsContext = createContext<AdminControls | null>(null);
 
 const chatPanelTabs: ChatPanelTab<ActivePanel>[] = [
-  { value: "chat", label: "Чат" },
-  { value: "private", label: "Личные" },
-  { value: "guild", label: "Гильдия" },
-  { value: "battle", label: "История" }
+  { value: "chat", label: "Chat" },
+  { value: "guild", label: "Guild chat" },
+  { value: "private", label: "✉️" }
 ];
 
 export function App() {
@@ -66,6 +71,8 @@ export function App() {
   const [me, setMe] = useState<CurrentUserDto | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<PublicUserDto | CurrentUserDto | null>(null);
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfileDto | null>(null);
+  const [playerProfileLoading, setPlayerProfileLoading] = useState(false);
   const [activePanel, setActivePanel] = useState<ActivePanel>("chat");
   const [users, setUsers] = useState<PublicUserDto[]>([]);
   const [dialogs, setDialogs] = useState<DialogDto[]>([]);
@@ -78,6 +85,7 @@ export function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [chatHeight, setChatHeight] = useState(() => readChatHeight());
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const [onlineOpen, setOnlineOpen] = useState(false);
   const [onlinePinned, setOnlinePinned] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
@@ -95,6 +103,41 @@ export function App() {
     setProfileOpen(false);
     setSelectedProfile(user);
   }, []);
+
+  const viewedUser = profileOpen ? me : selectedProfile;
+
+  useEffect(() => {
+    if (!viewedUser || !token) {
+      setPlayerProfile(null);
+      setPlayerProfileLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setPlayerProfileLoading(true);
+    setPlayerProfile(null);
+
+    void getPlayerProfile(token, viewedUser.id)
+      .then((profile) => {
+        if (!cancelled) {
+          setPlayerProfile(profile);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPlayerProfile(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPlayerProfileLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, viewedUser]);
 
   useEffect(() => {
     let mounted = true;
@@ -268,7 +311,27 @@ export function App() {
     <AdminControlsContext.Provider
       value={{ currentUserId: me?.id ?? 0, isAdmin: me?.role === "ADMIN", onModerate: moderateChatUser }}
     >
-    <div className={styles.app} style={{ "--chat-height": `${chatHeight}dvh` } as React.CSSProperties}>
+    <ChatDockStateContext.Provider value={{ collapsed: chatCollapsed, setCollapsed: setChatCollapsed }}>
+    <div
+      className={styles.app}
+      data-chat-collapsed={chatCollapsed || undefined}
+      style={{ "--chat-height": chatCollapsed ? "calc(56px + env(safe-area-inset-bottom))" : `${chatHeight}%` } as React.CSSProperties}
+    >
+      {viewedUser ? (
+      <header className={styles.sharedPageHeader}>
+        <CharacterHeader
+          characterName={me ? displayName(me) : "MrGreen"}
+          data={characterPageData}
+          onClose={() => {
+            if (profileOpen) {
+              setProfileOpen(false);
+            } else {
+              setSelectedProfile(null);
+            }
+          }}
+        />
+      </header>
+      ) : (
       <header className={styles.header}>
         <button
           aria-label="Открыть профиль"
@@ -280,12 +343,8 @@ export function App() {
           }}
         >
           <span className={styles.combatantName}>{me ? displayName(me) : "MrGreen"}</span>
-          <span className={styles.combatantBar} data-tone="health">
-            <span style={{ width: "100%" }} />
-          </span>
-          <span className={styles.combatantBar} data-tone="mana">
-            <span style={{ width: "54%" }} />
-          </span>
+          <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
+          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
         </button>
         <div className={styles.roundStatus}>
           <p>Таймер хода</p>
@@ -293,27 +352,31 @@ export function App() {
         </div>
         <div className={`${styles.combatantHeader} ${styles.combatantHeaderEnemy}`} aria-label="Противник Gestiya">
           <span className={styles.combatantName}>Gestiya</span>
-          <span className={styles.combatantBar} data-tone="health">
-            <span style={{ width: "100%" }} />
-          </span>
-          <span className={styles.combatantBar} data-tone="mana">
-            <span style={{ width: "54%" }} />
-          </span>
+          <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
+          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
         </div>
         {me?.role === "ADMIN" && adminNotice && <p className={styles.adminNotice}>{adminNotice}</p>}
       </header>
+      )}
 
       <main className={styles.main}>
         <BattleArena />
         {profileOpen && me && (
-          <div className={styles.topProfile}>
-            <Profile user={me} onBack={() => setProfileOpen(false)} />
+          <div className={`${styles.topProfile} ${styles.figmaProfileOverlay}`}>
+            <HeroProfile
+              user={me}
+              playerProfile={playerProfile}
+              loading={playerProfileLoading}
+              onBack={() => setProfileOpen(false)}
+            />
           </div>
         )}
         {!profileOpen && selectedProfile && (
-          <div className={styles.topProfile}>
-            <UserProfile
+          <div className={`${styles.topProfile} ${styles.figmaProfileOverlay}`}>
+            <HeroProfile
               user={selectedProfile}
+              playerProfile={playerProfile}
+              loading={playerProfileLoading}
               isBlocked={blockedUserIdSet.has(selectedProfile.id)}
               canBlock={selectedProfile.id !== me?.id}
               onBack={() => setSelectedProfile(null)}
@@ -429,6 +492,7 @@ export function App() {
           </section>
       </main>
     </div>
+    </ChatDockStateContext.Provider>
     </AdminControlsContext.Provider>
   );
 }
@@ -505,6 +569,38 @@ const gearSlots: ReadonlyArray<GearSlot> = [
   { id: "pants" },
   { id: "boots" }
 ];
+const gearGridLeftSlotIds = new Set<GearSlotId>([
+  "earring-left",
+  "earring-right",
+  "amulet",
+  "weapon",
+  "armor",
+  "pants"
+]);
+const gearDrawerStats = {
+  player: {
+    name: "MrGreen",
+    stats: [
+      ["Сила", 333],
+      ["Жизнь", 333],
+      ["Интуиция", 333],
+      ["Интеллект", 333],
+      ["Мудрость", 333],
+      ["Ловкость", 333]
+    ]
+  },
+  enemy: {
+    name: "MrRed",
+    stats: [
+      ["Сила", 286],
+      ["Жизнь", 304],
+      ["Интуиция", 351],
+      ["Интеллект", 268],
+      ["Мудрость", 290],
+      ["Ловкость", 327]
+    ]
+  }
+} as const;
 
 // Карточка — единственный источник названия, характеристик и модификаторов предмета.
 const gearItemCards: Record<GearSide, Partial<Record<GearSlotId, GearItemCard>>> = {
@@ -1063,6 +1159,46 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
     setDragOffset(0);
   }
 
+  function renderGearSlot(slot: GearSlot) {
+    const item = itemsBySlot[slot.id];
+
+    if (!item) {
+      return <div className={styles.gearSlot} data-slot={slot.id} key={slot.id} />;
+    }
+
+    const isSelected = selectedPreview?.item.id === item.id;
+
+    return (
+      <button
+        aria-label={`Открыть карточку: ${item.name}`}
+        aria-pressed={isSelected}
+        className={styles.gearSlot}
+        data-has-item="true"
+        data-rarity={item.rarity}
+        data-selected={isSelected || undefined}
+        data-slot={slot.id}
+        key={slot.id}
+        title={item.name}
+        type="button"
+        onBlur={() => setHoveredPreview(null)}
+        onClick={(event) => {
+          if (didDragLabel.current) {
+            didDragLabel.current = false;
+            return;
+          }
+
+          const preview = createItemPreview(item, event.currentTarget);
+          setSelectedPreview((current) => (current?.item.id === item.id ? null : preview));
+        }}
+        onFocus={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
+        onPointerEnter={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
+        onPointerLeave={() => setHoveredPreview(null)}
+      >
+        <span aria-hidden="true" className={styles.gearItemGlyph}>{item.symbol}</span>
+      </button>
+    );
+  }
+
   return (
     <aside
       className={styles.gearDrawer}
@@ -1127,50 +1263,36 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
         Вещи
       </button>
       <div className={styles.gearGrid}>
-        {gearSlots.map((slot) => {
-          const item = itemsBySlot[slot.id];
-
-          if (!item) {
-            return (
-              <div className={styles.gearSlot} data-slot={slot.id} key={slot.id} />
-            );
-          }
-
-          const isSelected = selectedPreview?.item.id === item.id;
-
-          return (
-            <button
-              aria-label={`Открыть карточку: ${item.name}`}
-              aria-pressed={isSelected}
-              className={styles.gearSlot}
-              data-has-item="true"
-              data-rarity={item.rarity}
-              data-selected={isSelected || undefined}
-              data-slot={slot.id}
-              key={slot.id}
-              title={item.name}
-              type="button"
-              onBlur={() => setHoveredPreview(null)}
-              onClick={(event) => {
-                if (didDragLabel.current) {
-                  didDragLabel.current = false;
-                  return;
-                }
-
-                const preview = createItemPreview(item, event.currentTarget);
-                setSelectedPreview((current) => (current?.item.id === item.id ? null : preview));
-              }}
-              onFocus={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
-              onPointerEnter={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
-              onPointerLeave={() => setHoveredPreview(null)}
-            >
-              <span aria-hidden="true" className={styles.gearItemGlyph}>{item.symbol}</span>
-            </button>
-          );
-        })}
+        <div className={styles.gearGridPanel} data-side="left">
+          <div className={styles.gearSlotStack} data-side="left">
+            {gearSlots.filter((slot) => gearGridLeftSlotIds.has(slot.id)).map(renderGearSlot)}
+          </div>
+        </div>
+        <div className={styles.gearGridPanel} data-side="right">
+          <div className={styles.gearSlotStack} data-side="right">
+            {gearSlots.filter((slot) => !gearGridLeftSlotIds.has(slot.id)).map(renderGearSlot)}
+          </div>
+        </div>
       </div>
+      <GearDrawerStats data={gearDrawerStats[side]} />
       {activePreview && <GearItemDescription preview={activePreview} />}
     </aside>
+  );
+}
+
+function GearDrawerStats({ data }: { data: (typeof gearDrawerStats)[GearSide] }) {
+  return (
+    <section className={styles.gearDrawerStats} aria-label={"Характеристики " + data.name}>
+      <h3>{data.name}</h3>
+      <dl>
+        {data.stats.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -2091,86 +2213,28 @@ function UserActionName({
   );
 }
 
-function Profile({ user, onBack }: { user: CurrentUserDto; onBack: () => void }) {
-  return (
-    <section className={styles.profile}>
-      <button className={styles.profileBack} type="button" onClick={onBack}>
-        Назад
-      </button>
-      <Avatar user={user} />
-      <h2>{displayName(user)}</h2>
-      <p>{user.username ? `@${user.username}` : "Без username"}</p>
-      <dl>
-        <div>
-          <dt>Telegram ID</dt>
-          <dd>{user.telegramId}</dd>
-        </div>
-        <div>
-          <dt>Роль</dt>
-          <dd>{user.role}</dd>
-        </div>
-        <div>
-          <dt>Создан</dt>
-          <dd>{formatDate(user.createdAt)}</dd>
-        </div>
-      </dl>
-      {user.role === "ADMIN" && (
-        <section className={styles.adminGuide}>
-          <h3>Команды администратора</h3>
-          <p>В меню у ника: ⛔ блокировка доступа к чату, 🔇 молчанка на 1 час, ⛓ тюрьма на 1 сутки, 🔓 снять все ручные санкции.</p>
-          <p>Админские иконки видны только вам.</p>
-        </section>
-      )}
-    </section>
-  );
-}
+const profileStatLabels = ["Strength", "Agility", "Vitality", "Intuition", "Intelligence", "Wisdom"] as const;
+const profileEquipmentLeft = ["оруж.", "броня", "штаны"] as const;
+const profileEquipmentRight = ["шлем", "наручи", "перч.", "пояс", "щит", "обувь"] as const;
 
-function UserProfile({
+function HeroProfile({
   user,
+  playerProfile,
+  loading,
   isBlocked = false,
   canBlock = true,
   onBack,
   onToggleBlockedUser
 }: {
   user: PublicUserDto | CurrentUserDto;
+  playerProfile: PlayerProfileDto | null;
+  loading: boolean;
   isBlocked?: boolean;
   canBlock?: boolean;
   onBack: () => void;
   onToggleBlockedUser?: (user: PublicUserDto) => void | Promise<void>;
 }) {
-  return (
-    <section className={styles.profile}>
-      <button className={styles.profileBack} type="button" onClick={onBack}>
-        Назад
-      </button>
-      <Avatar user={user} />
-      <h2>{displayName(user)}</h2>
-      <p>{user.username ? `@${user.username}` : "Без username"}</p>
-      <dl>
-        {"telegramId" in user && (
-          <div>
-            <dt>Telegram ID</dt>
-            <dd>{user.telegramId}</dd>
-          </div>
-        )}
-        <div>
-          <dt>Статус</dt>
-          <dd>Онлайн</dd>
-        </div>
-      </dl>
-      {canBlock && onToggleBlockedUser && (
-        <button
-          className={styles.profileBlock}
-          type="button"
-          onClick={() => {
-            void onToggleBlockedUser(user);
-          }}
-        >
-          {isBlocked ? "Разблокировать" : "Заблокировать"}
-        </button>
-      )}
-    </section>
-  );
+  return <CharacterPage characterName={displayName(user)} />;
 }
 
 function OnlineSplitView({

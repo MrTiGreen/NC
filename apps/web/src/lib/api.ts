@@ -6,6 +6,7 @@ import type {
   CurrentUserDto,
   DialogDto,
   PrivateMessageDto,
+  PlayerProfileDto,
   PublicMessageDto,
   PublicUserDto
 } from "@telegram-mini-chat/shared";
@@ -21,6 +22,10 @@ export async function authTelegram(initData: string) {
 
 export async function getMe(token: string) {
   return request<CurrentUserDto>("/api/me", {}, token);
+}
+
+export async function getPlayerProfile(token: string, userId: number) {
+  return request<PlayerProfileDto>(`/api/player-profile/${userId}`, {}, token);
 }
 
 export async function getUsers(token: string) {

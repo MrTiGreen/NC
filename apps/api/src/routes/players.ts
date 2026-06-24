@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { playerRegistrationRequestSchema, type PlayerProfileDto } from "@telegram-mini-chat/shared";
 import type { AuthenticatedRequest } from "../types.js";
 import { prisma } from "../prisma.js";
@@ -9,14 +9,18 @@ export const playersRouter = Router();
 
 playersRouter.get("/player-profile", async (req, res) => {
   const { authUser } = req as AuthenticatedRequest;
-  const profile = await prisma.playerProfile.findUnique({ where: { userId: authUser.id } });
+  await sendPlayerProfile(res, authUser.id);
+});
 
-  if (!profile) {
-    res.status(404).json({ error: "Player profile has not been registered" });
+playersRouter.get("/player-profile/:userId", async (req, res) => {
+  const userId = Number(req.params.userId);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: "Invalid user id" });
     return;
   }
 
-  res.json(serializePlayerProfile(profile));
+  await sendPlayerProfile(res, userId);
 });
 
 playersRouter.post("/player-profile", async (req, res) => {
@@ -66,4 +70,15 @@ function serializePlayerProfile(profile: {
     age: profile.age,
     birthCity: profile.birthCity
   };
+}
+
+async function sendPlayerProfile(res: Response, userId: number) {
+  const profile = await prisma.playerProfile.findUnique({ where: { userId } });
+
+  if (!profile) {
+    res.status(404).json({ error: "Player profile has not been registered" });
+    return;
+  }
+
+  res.json(serializePlayerProfile(profile));
 }
