@@ -8,45 +8,451 @@ datasource db {
 }
 
 model User {
-  id                      Int                   @id @default(autoincrement())
-  telegramId              BigInt                @unique @map("telegram_id")
+  id                      Int                     @id @default(autoincrement())
+  telegramId              BigInt                  @unique @map("telegram_id")
   username                String?
-  firstName               String?               @map("first_name")
-  lastName                String?               @map("last_name")
-  avatarUrl               String?               @map("avatar_url")
-  role                    UserRole              @default(USER)
-  coalition               Coalition             @default(NONE)
-  publicMutedUntil        DateTime?             @map("public_muted_until")
-  jailedUntil             DateTime?             @map("jailed_until")
-  chatBlockedAt           DateTime?             @map("chat_blocked_at")
-  createdAt               DateTime              @default(now()) @map("created_at")
-  updatedAt               DateTime              @updatedAt @map("updated_at")
+  firstName               String?                 @map("first_name")
+  lastName                String?                 @map("last_name")
+  avatarUrl               String?                 @map("avatar_url")
+  role                    UserRole                @default(USER)
+  coalition               Coalition               @default(NONE)
+  publicMutedUntil        DateTime?               @map("public_muted_until")
+  jailedUntil             DateTime?               @map("jailed_until")
+  chatBlockedAt           DateTime?               @map("chat_blocked_at")
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
   publicMessages          PublicMessage[]
   guildMessages           GuildMessage[]
-  sentPrivateMessages     PrivateMessage[]      @relation("sentMessages")
-  receivedPrivateMessages PrivateMessage[]      @relation("receivedMessages")
+  sentPrivateMessages     PrivateMessage[]        @relation("sentMessages")
+  receivedPrivateMessages PrivateMessage[]        @relation("receivedMessages")
   moderationEvents        ChatModerationEvent[]
-  blockedUsers            UserBlock[]           @relation("blockerBlocks")
-  blockedByUsers          UserBlock[]           @relation("blockedBlocks")
+  blockedUsers            UserBlock[]             @relation("blockerBlocks")
+  blockedByUsers          UserBlock[]             @relation("blockedBlocks")
   adminActionsTaken       AdminModerationAction[] @relation("adminActionActor")
   adminActionsReceived    AdminModerationAction[] @relation("adminActionTarget")
   playerProfile           PlayerProfile?
+  reviewedBattleFlags     BattleReviewFlag[]      @relation("battleFlagReviewer")
+  characterAuditEvents    CharacterAuditLog[]     @relation("characterAuditActor")
 
   @@map("users")
 }
 
 model PlayerProfile {
-  id                 Int      @id @default(autoincrement())
-  userId             Int      @unique @map("user_id")
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nickname           String
-  nicknameNormalized String   @unique @map("nickname_normalized")
-  registeredAt       DateTime @default(now()) @map("registered_at")
-  age                Int
-  birthCity          String   @map("birth_city")
+  id                  Int                       @id @default(autoincrement())
+  userId              Int                       @unique @map("user_id")
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nickname            String
+  nicknameNormalized  String                    @unique @map("nickname_normalized")
+  registeredAt        DateTime                  @default(now()) @map("registered_at")
+  age                 Int
+  birthCity           String                    @map("birth_city")
+  progression         CharacterProgression?
+  stats               CharacterStats?
+  statAllocations     CharacterStatAllocation[]
+  weaponMasteries     WeaponMastery[]
+  itemInstances       ItemInstance[]
+  battleParticipants  BattleParticipant[]
+  wonBattles          Battle[]                  @relation("battleWinner")
+  reportedBattleFlags BattleReviewFlag[]        @relation("battleFlagReporter")
+  auditLogs           CharacterAuditLog[]
 
   @@index([registeredAt])
   @@map("player_profiles")
+}
+
+/// The existing PlayerProfile is the character identity in this application.
+/// These rows contain gameplay state so the chat profile contract stays stable.
+model CharacterProgression {
+  id                  Int                @id @default(autoincrement())
+  characterId         Int                @unique @map("character_id")
+  character           PlayerProfile      @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  level               Int                @default(1)
+  up                  Int                @default(0)
+  totalExp            BigInt             @default(0) @map("total_exp")
+  availableStatPoints Int                @default(0) @map("available_stat_points")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  experienceEntries   ExperienceLedger[]
+
+  @@index([level, up])
+  @@map("character_progressions")
+}
+
+model CharacterStats {
+  id           Int           @id @default(autoincrement())
+  characterId  Int           @unique @map("character_id")
+  character    PlayerProfile @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  strength     Int           @default(10)
+  agility      Int           @default(10)
+  vitality     Int           @default(10)
+  intuition    Int           @default(10)
+  intelligence Int           @default(10)
+  wisdom       Int           @default(10)
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@map("character_stats")
+}
+
+enum CharacterStatName {
+  STRENGTH
+  AGILITY
+  VITALITY
+  INTUITION
+  INTELLIGENCE
+  WISDOM
+}
+
+model CharacterStatAllocation {
+  id          Int               @id @default(autoincrement())
+  characterId Int               @map("character_id")
+  character   PlayerProfile     @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  statName    CharacterStatName @map("stat_name")
+  points      Int               @default(1)
+  reason      String            @default("manual_spend")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([characterId, createdAt])
+  @@map("character_stat_allocations")
+}
+
+enum WeaponType {
+  SWORDS
+  AXES
+  DAGGERS
+  HAMMERS
+  FISTS
+  STAFFS
+  WANDS
+}
+
+model WeaponMastery {
+  id                  Int           @id @default(autoincrement())
+  characterId         Int           @map("character_id")
+  character           PlayerProfile @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  weaponType          WeaponType    @map("weapon_type")
+  visibleSkillValue   Int           @default(0) @map("visible_skill_value")
+  hiddenProgress      Float         @default(0) @map("hidden_progress")
+  totalHiddenProgress Float         @default(0) @map("total_hidden_progress")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  @@unique([characterId, weaponType])
+  @@map("weapon_masteries")
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum ItemHandType {
+  ONE_HANDED
+  TWO_HANDED
+  SHIELD
+}
+
+enum ItemCategory {
+  EQUIPMENT
+  CONSUMABLE
+  MATERIAL
+}
+
+enum CombatEquipmentSlot {
+  HELMET
+  ARMOR
+  BELT
+  PANTS
+  BOOTS
+  PRIMARY_HAND
+  OFF_HAND
+}
+
+model ItemTemplate {
+  id                      Int            @id @default(autoincrement())
+  slug                    String         @unique
+  name                    String
+  category                ItemCategory   @default(EQUIPMENT)
+  icon                    String         @default("◆")
+  displaySlot             String?        @map("display_slot")
+  description             String         @default("")
+  requirements            Json           @default("[]")
+  properties              Json           @default("[]")
+  rarity                  ItemRarity     @default(COMMON)
+  levelRequirement        Int            @default(1) @map("level_requirement")
+  weaponType              WeaponType?    @map("weapon_type")
+  handType                ItemHandType?  @map("hand_type")
+  canDualWield            Boolean        @default(false) @map("can_dual_wield")
+  offhandDamageMultiplier Float          @default(0.6) @map("offhand_damage_multiplier")
+  shieldBlockZoneBonus    Int            @default(0) @map("shield_block_zone_bonus")
+  baseWeaponDamage        Float          @default(0) @map("base_weapon_damage")
+  baseArmor               Float          @default(0) @map("base_armor")
+  modifiers               Json           @default("[]")
+  armorByZone             Json           @default("{}") @map("armor_by_zone")
+  isConsumable            Boolean        @default(false) @map("is_consumable")
+  createdAt               DateTime       @default(now()) @map("created_at")
+  instances               ItemInstance[]
+
+  @@index([category, rarity])
+  @@map("item_templates")
+}
+
+model ItemInstance {
+  id                Int                  @id @default(autoincrement())
+  characterId       Int                  @map("character_id")
+  character         PlayerProfile        @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  templateId        Int                  @map("template_id")
+  template          ItemTemplate         @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  equippedSlot      CombatEquipmentSlot? @map("equipped_slot")
+  inventoryPosition Int?                 @map("inventory_position")
+  quantity          Int                  @default(1)
+  currentDurability Decimal              @default(100) @map("current_durability") @db.Decimal(10, 1)
+  maxDurability     Decimal              @default(100) @map("max_durability") @db.Decimal(10, 1)
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  auditLogs         CharacterAuditLog[]
+
+  @@index([characterId, equippedSlot])
+  @@index([characterId, inventoryPosition])
+  @@map("item_instances")
+}
+
+enum BattleType {
+  TRAINING
+  FRIENDLY
+  NORMAL
+  RANKED
+  TOWER
+  SURVIVAL
+  EVENT
+}
+
+enum BattleStatus {
+  PENDING_ACTIONS
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum BattleReviewStatus {
+  NONE
+  PENDING
+  REVIEWED
+  DISMISSED
+  CONFIRMED_ABUSE
+}
+
+enum BattleBlockResult {
+  BLOCKED
+  BLOCK_PIERCED
+  PARTIAL_BLOCK
+  NOT_BLOCKED
+}
+
+enum BattleZone {
+  HEAD
+  CHEST
+  ABDOMEN
+  LEGS
+}
+
+enum BattleLogEventType {
+  ROUND_RESOLVED
+  HIT
+  BATTLE_FINISHED
+  EXPERIENCE_AWARDED
+  MASTERY_AWARDED
+  SUSPICION_FLAGGED
+  INJURY_CANDIDATE
+}
+
+model Battle {
+  id                Int                 @id @default(autoincrement())
+  type              BattleType          @default(NORMAL)
+  status            BattleStatus        @default(PENDING_ACTIONS)
+  suspicionScore    Float               @default(0) @map("suspicion_score")
+  reviewStatus      BattleReviewStatus  @default(NONE) @map("review_status")
+  eventMultiplier   Float               @default(1) @map("event_multiplier")
+  randomSeed        String              @map("random_seed")
+  winnerCharacterId Int?                @map("winner_character_id")
+  winner            PlayerProfile?      @relation("battleWinner", fields: [winnerCharacterId], references: [id], onDelete: SetNull)
+  result            Json?
+  createdAt         DateTime            @default(now()) @map("created_at")
+  finishedAt        DateTime?           @map("finished_at")
+  participants      BattleParticipant[]
+  rounds            BattleRound[]
+  actions           BattleAction[]
+  logs              BattleLogEntry[]
+  reviewFlags       BattleReviewFlag[]
+  experienceEntries ExperienceLedger[]
+  auditLogs         CharacterAuditLog[]
+
+  @@index([status, createdAt])
+  @@index([reviewStatus, createdAt])
+  @@map("battles")
+}
+
+model BattleAction {
+  id                  Int         @id @default(autoincrement())
+  battleId            Int         @map("battle_id")
+  battle              Battle      @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  roundNumber         Int         @map("round_number")
+  characterId         Int         @map("character_id")
+  primaryAttackZone   BattleZone  @map("primary_attack_zone")
+  secondaryAttackZone BattleZone? @map("secondary_attack_zone")
+  defenseZones        Json        @map("defense_zones")
+  selectedTechnique   String?     @map("selected_technique")
+  selectedConsumable  String?     @map("selected_consumable")
+  selectedSpell       String?     @map("selected_spell")
+  energyCost          Float?      @map("energy_cost")
+  createdAt           DateTime    @default(now()) @map("created_at")
+
+  @@unique([battleId, roundNumber, characterId])
+  @@map("battle_actions")
+}
+
+model BattleParticipant {
+  id                     Int           @id @default(autoincrement())
+  battleId               Int           @map("battle_id")
+  battle                 Battle        @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  characterId            Int           @map("character_id")
+  character              PlayerProfile @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  position               Int
+  currentHp              Float         @map("current_hp")
+  maxHpSnapshot          Float         @map("max_hp_snapshot")
+  gearScore              Float         @default(0) @map("gear_score")
+  combatBuffs            Json          @default("[]") @map("combat_buffs")
+  damageDealt            Float         @default(0) @map("damage_dealt")
+  damageReceived         Float         @default(0) @map("damage_received")
+  successfulHits         Int           @default(0) @map("successful_hits")
+  expAwarded             Int           @default(0) @map("exp_awarded")
+  masteryProgressAwarded Float         @default(0) @map("mastery_progress_awarded")
+  isWinner               Boolean       @default(false) @map("is_winner")
+  ipHash                 String?       @map("ip_hash")
+  deviceFingerprint      String?       @map("device_fingerprint")
+  createdAt              DateTime      @default(now()) @map("created_at")
+
+  @@unique([battleId, characterId])
+  @@index([characterId, createdAt])
+  @@map("battle_participants")
+}
+
+model BattleRound {
+  id          Int      @id @default(autoincrement())
+  battleId    Int      @map("battle_id")
+  battle      Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  roundNumber Int      @map("round_number")
+  actions     Json
+  result      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([battleId, roundNumber])
+  @@map("battle_rounds")
+}
+
+model BattleLogEntry {
+  id          Int                @id @default(autoincrement())
+  battleId    Int                @map("battle_id")
+  battle      Battle             @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  roundNumber Int?               @map("round_number")
+  eventType   BattleLogEventType @map("event_type")
+  messageKey  String             @map("message_key")
+  metadata    Json               @default("{}")
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  @@index([battleId, createdAt])
+  @@map("battle_log_entries")
+}
+
+enum BattleReviewReason {
+  USER_REPORTED
+  REPEATED_OPPONENT
+  REPEATED_LOSS_PATTERN
+  LOW_DAMAGE
+  SHORT_BATTLE
+  GEAR_MISMATCH
+  SHARED_DEVICE_OR_IP
+  SUSPICIOUS_REWARD_TRANSFER
+}
+
+model BattleReviewFlag {
+  id                  Int                @id @default(autoincrement())
+  battleId            Int                @map("battle_id")
+  battle              Battle             @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  reporterCharacterId Int?               @map("reporter_character_id")
+  reporter            PlayerProfile?     @relation("battleFlagReporter", fields: [reporterCharacterId], references: [id], onDelete: SetNull)
+  reason              BattleReviewReason
+  suspicionScore      Float              @map("suspicion_score")
+  status              BattleReviewStatus @default(PENDING)
+  reviewedByUserId    Int?               @map("reviewed_by")
+  reviewedBy          User?              @relation("battleFlagReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewNote          String?            @map("review_note")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  reviewedAt          DateTime?          @map("reviewed_at")
+
+  @@index([status, createdAt])
+  @@index([battleId])
+  @@map("battle_review_flags")
+}
+
+model ExperienceLedger {
+  id            Int                  @id @default(autoincrement())
+  progressionId Int                  @map("progression_id")
+  progression   CharacterProgression @relation(fields: [progressionId], references: [id], onDelete: Cascade)
+  battleId      Int?                 @map("battle_id")
+  battle        Battle?              @relation(fields: [battleId], references: [id], onDelete: SetNull)
+  amount        BigInt
+  source        String
+  metadata      Json                 @default("{}")
+  createdAt     DateTime             @default(now()) @map("created_at")
+
+  @@index([progressionId, createdAt])
+  @@map("experience_ledger")
+}
+
+enum CharacterAuditEventType {
+  STATS_CHANGED
+  ITEM_GRANTED
+  ITEM_EQUIPPED
+  ITEM_UNEQUIPPED
+  ITEM_CONSUMED
+  ITEM_DURABILITY_CHANGED
+  ITEM_DELETED
+  ITEM_MOVED
+  CURRENCY_CHANGED
+  BATTLE_CREATED
+  BATTLE_FINISHED
+  EXPERIENCE_CHANGED
+  MASTERY_CHANGED
+  ADMIN_NOTE
+}
+
+/// Hidden append-only character history for anti-abuse review.
+/// Access is intentionally backend/admin-only; do not expose it to normal clients.
+model CharacterAuditLog {
+  id                    Int                     @id @default(autoincrement())
+  characterId           Int                     @map("character_id")
+  character             PlayerProfile           @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  actorUserId           Int?                    @map("actor_user_id")
+  actorUser             User?                   @relation("characterAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  eventType             CharacterAuditEventType @map("event_type")
+  summary               String
+  beforeState           Json?                   @map("before_state")
+  afterState            Json?                   @map("after_state")
+  metadata              Json                    @default("{}")
+  relatedItemInstanceId Int?                    @map("related_item_instance_id")
+  relatedItemInstance   ItemInstance?           @relation(fields: [relatedItemInstanceId], references: [id], onDelete: SetNull)
+  relatedBattleId       Int?                    @map("related_battle_id")
+  relatedBattle         Battle?                 @relation(fields: [relatedBattleId], references: [id], onDelete: SetNull)
+  createdAt             DateTime                @default(now()) @map("created_at")
+
+  @@index([characterId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([relatedBattleId])
+  @@index([relatedItemInstanceId])
+  @@map("character_audit_logs")
 }
 
 enum UserRole {

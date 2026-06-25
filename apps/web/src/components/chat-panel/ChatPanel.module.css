@@ -22,7 +22,7 @@
   border-radius: 0;
   background:
     linear-gradient(rgba(8, 8, 7, 0.76), rgba(8, 8, 7, 0.9)),
-    url("/assets/ratny-dvor/png/ui_panel_log_chat_1004x330.png") center / 100% 100% no-repeat,
+    url("/assets/nightclub/ui/png/ui_panel_log_chat_1004x330.png") center / 100% 100% no-repeat,
     radial-gradient(circle at 50% 0, rgba(214, 161, 95, 0.08), transparent 150px),
     var(--chat-ink);
   box-shadow:
@@ -176,7 +176,7 @@
   border: 0;
   border-radius: 0;
   padding: 10px 17px;
-  background: url("/assets/ratny-dvor/svg/button_generic_empty.svg") center / 100% 100% no-repeat;
+  background: url("/assets/nightclub/ui/svg/button_generic_empty.svg") center / 100% 100% no-repeat;
   color: var(--chat-gold);
   font: inherit;
   font-size: 12px;
@@ -293,7 +293,7 @@
 .tabs .backTab {
   background:
     linear-gradient(180deg, rgba(150, 42, 36, 0.42), rgba(32, 12, 8, 0.2)),
-    url("/assets/ratny-dvor/svg/panel_generic.svg") center / 100% 100% no-repeat;
+    url("/assets/nightclub/ui/svg/panel_generic.svg") center / 100% 100% no-repeat;
   color: #ffd18a;
   font-weight: 800;
 }
@@ -440,7 +440,7 @@
   border-top: 0;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(214, 161, 95, 0.04)),
-    url("/assets/ratny-dvor/png/ui_panel_action_bar_1004x150.png") center / 100% 100% no-repeat,
+    url("/assets/nightclub/ui/png/ui_panel_action_bar_1004x150.png") center / 100% 100% no-repeat,
     #0b0a08;
 }
 
@@ -458,7 +458,7 @@
   padding: 11px 15px;
   background:
     linear-gradient(rgba(11, 11, 10, 0.34), rgba(11, 11, 10, 0.34)),
-    url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat,
+    url("/assets/nightclub/ui/png/input_field_270x48.png") center / 100% 100% no-repeat,
     #100e0c;
   color: #ead7b8;
   font: inherit;
@@ -483,7 +483,7 @@
   border-radius: 0;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--sheet-accent) 18%, transparent), transparent),
-    url("/assets/ratny-dvor/png/button_compact_empty_104x122.png") center / 100% 100% no-repeat,
+    url("/assets/nightclub/ui/png/button_compact_empty_104x122.png") center / 100% 100% no-repeat,
     #16100b;
   color: var(--chat-gold);
   font: inherit;

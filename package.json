@@ -11,6 +11,7 @@
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test -w apps/api",
+    "simulate:combat": "npm run simulate:combat -w apps/api",
     "prisma:generate": "npm run prisma:generate -w apps/api",
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
     "prisma:deploy": "npm run prisma:deploy -w apps/api"

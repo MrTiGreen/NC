@@ -19,6 +19,18 @@ export const playerRegistrationRequestSchema = z.object({
   age: z.coerce.number().int().min(1).max(120)
 });
 
+export const characterStatKeySchema = z.enum(["strength", "agility", "vitality", "intuition", "intelligence", "wisdom"]);
+export const characterStatsSaveRequestSchema = z.object({
+  allocations: z.object({
+    strength: z.coerce.number().int().min(0).max(100),
+    agility: z.coerce.number().int().min(0).max(100),
+    vitality: z.coerce.number().int().min(0).max(100),
+    intuition: z.coerce.number().int().min(0).max(100),
+    intelligence: z.coerce.number().int().min(0).max(100),
+    wisdom: z.coerce.number().int().min(0).max(100)
+  })
+});
+
 export const messageTextSchema = z
   .string()
   .trim()
@@ -108,6 +120,82 @@ export type PlayerProfileDto = {
   registeredAt: string;
   age: number;
   birthCity: string;
+};
+
+export type CharacterStatsDto = {
+  strength: number;
+  agility: number;
+  vitality: number;
+  intuition: number;
+  intelligence: number;
+  wisdom: number;
+};
+
+export type CharacterProgressionDto = {
+  level: number;
+  availableStatPoints: number;
+};
+
+export type CharacterStatsSaveResponseDto = {
+  stats: CharacterStatsDto;
+  progression: CharacterProgressionDto;
+};
+
+export type CharacterPublicEquipmentDto = {
+  id: number;
+  slot: string;
+  name: string;
+  icon: string;
+  rarity: string;
+  description: string;
+  requirements: unknown;
+  properties: unknown;
+  armor: number;
+  durability: {
+    current: string;
+    maximum: string;
+  };
+};
+
+export type CharacterPublicStatusEffectDto = {
+  id: string;
+  icon: string;
+  label: string;
+  kind: "buff" | "debuff" | "injury";
+  description: string;
+  expiresAt: string | null;
+};
+
+export type CharacterPublicProfileDto = {
+  userId: number;
+  characterId: number;
+  nickname: string;
+  registeredAt: string;
+  age: number;
+  birthCity: string;
+  aboutMe: string;
+  level: number;
+  totalExp: string;
+  stats: CharacterStatsDto;
+  combatRecord: {
+    wins: number;
+    losses: number;
+    draws: number;
+  };
+  health: {
+    current: number;
+    maximum: number;
+    regeneratedAt: string;
+    regenPerMinute: number;
+  };
+  modifiers: {
+    dodge: number;
+    crit: number;
+    counterAttack: number;
+    regeneration: number;
+  };
+  equipment: CharacterPublicEquipmentDto[];
+  statusEffects: CharacterPublicStatusEffectDto[];
 };
 
 export type BlockedUsersDto = {

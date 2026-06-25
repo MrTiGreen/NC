@@ -289,9 +289,7 @@
   inset: 0;
   min-height: 210px;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(11, 11, 10, 0.04), rgba(11, 11, 10, 0.34)),
-    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat;
+  background: linear-gradient(180deg, rgba(11, 11, 10, 0.04), rgba(11, 11, 10, 0.34));
   content: "";
   opacity: 0.9;
 }
@@ -687,6 +685,14 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+}
+
+.gearDrawer[data-side="enemy"] .gearGridPanel[data-side="left"] {
+  order: 2;
+}
+
+.gearDrawer[data-side="enemy"] .gearGridPanel[data-side="right"] {
+  order: 1;
 }
 
 .gearSlotStack {
@@ -1223,6 +1229,7 @@
 }
 
 .figmaProfileOverlay {
+  z-index: 5;
   top: 0;
   right: 0;
   bottom: var(--chat-height);
@@ -1419,7 +1426,7 @@
   border: 0;
   border-radius: 0;
   padding: 7px 6px;
-  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  background: url("/assets/nightclub/ui/png/input_field_270x48.png") center / 100% 100% no-repeat;
   color: #ead7b8;
   font: inherit;
   text-align: left;
@@ -1608,7 +1615,7 @@
   border: 0;
   border-radius: 0;
   padding: 0 14px;
-  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  background: url("/assets/nightclub/ui/png/input_field_270x48.png") center / 100% 100% no-repeat;
   color: var(--asset-gold);
   font: inherit;
   font-size: 12px;
@@ -1700,7 +1707,7 @@
   border: 0;
   border-radius: 0;
   padding: 7px 9px;
-  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  background: url("/assets/nightclub/ui/png/input_field_270x48.png") center / 100% 100% no-repeat;
   color: #ead7b8;
   cursor: pointer;
   text-align: left;
@@ -1745,7 +1752,7 @@
   justify-content: center;
   border-radius: 50%;
   background:
-    url("/assets/ratny-dvor/png/portrait_placeholder_140.png") center / 100% 100% no-repeat,
+    url("/assets/nightclub/ui/png/portrait_placeholder_140.png") center / 100% 100% no-repeat,
     #191613;
   color: #f0be7b;
   font-weight: 700;
@@ -1775,7 +1782,6 @@
   padding: 32px 18px;
   background:
     linear-gradient(rgba(11, 11, 10, 0.58), rgba(11, 11, 10, 0.72)),
-    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat,
     #0b0b0a;
   text-align: center;
 }
@@ -1787,7 +1793,7 @@
   border: 0;
   border-radius: 0;
   padding: 0 14px;
-  background: url("/assets/ratny-dvor/png/input_field_270x48.png") center / 100% 100% no-repeat;
+  background: url("/assets/nightclub/ui/png/input_field_270x48.png") center / 100% 100% no-repeat;
   color: var(--asset-gold);
   font: inherit;
 }
@@ -2083,7 +2089,6 @@
   padding: 24px;
   background:
     linear-gradient(rgba(11, 11, 10, 0.68), rgba(11, 11, 10, 0.82)),
-    url("/assets/ratny-dvor/png/battle_empty_background_432x706.png") top center / min(100vw, 432px) auto no-repeat,
     #0b0b0a;
   color: #efd9b5;
   text-align: center;

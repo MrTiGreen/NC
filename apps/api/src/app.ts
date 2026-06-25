@@ -5,7 +5,10 @@ import helmet from "helmet";
 import { config } from "./config.js";
 import { requireAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.js";
+import { adminBattleReviewRouter, battlesRouter, charactersRouter } from "./routes/battles.js";
+import { adminCharacterAuditRouter } from "./routes/character-audit.js";
 import { messagesRouter } from "./routes/messages.js";
+import { itemsRouter } from "./routes/items.js";
 import { playersRouter } from "./routes/players.js";
 import { usersRouter } from "./routes/users.js";
 
@@ -43,6 +46,11 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api", requireAuth, usersRouter);
   app.use("/api", requireAuth, playersRouter);
+  app.use("/api", requireAuth, itemsRouter);
+  app.use("/api", requireAuth, charactersRouter);
+  app.use("/api", requireAuth, battlesRouter);
+  app.use("/api", requireAuth, adminBattleReviewRouter);
+  app.use("/api", requireAuth, adminCharacterAuditRouter);
   app.use("/api", requireAuth, messageLimiter, messagesRouter);
 
   app.use((_req, res) => {

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createPortal } from "react-dom";
 import type {
   AdminModerationActionDto,
+  CharacterPublicProfileDto,
   CurrentUserDto,
   DialogDto,
   PrivateMessageDto,
@@ -14,6 +15,7 @@ import {
   blockUser,
   getDialogs,
   getGuildMessages,
+  getCharacterPublicProfile,
   getPlayerProfile,
   getPrivateFeedMessages,
   getPrivateMessages,
@@ -39,7 +41,10 @@ import {
 import { CharacterPage } from "./components/character/CharacterPage";
 import { CharacterHeader } from "./components/character/CharacterHeader";
 import { characterPageData } from "./components/character/characterData";
-import { BattleNavigationContext, ChatDockStateContext } from "./components/chat-panel/ChatDockState";
+import { getEquippedGear } from "./components/gear/equippedGear";
+import { InventoryPage } from "./components/inventory/InventoryPage";
+import { announceItemDescriptionOpen, subscribeItemDescriptionOpen } from "./components/inventory/itemDescriptionEvents";
+import { BattleNavigationContext, ChatDockStateContext, InventoryNavigationContext } from "./components/chat-panel/ChatDockState";
 import styles from "./App.module.css";
 
 type Status = "loading" | "ready" | "error";
@@ -70,9 +75,13 @@ export function App() {
   const [token, setToken] = useState("");
   const [me, setMe] = useState<CurrentUserDto | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<PublicUserDto | CurrentUserDto | null>(null);
   const [playerProfile, setPlayerProfile] = useState<PlayerProfileDto | null>(null);
   const [playerProfileLoading, setPlayerProfileLoading] = useState(false);
+  const [currentCharacterProfile, setCurrentCharacterProfile] = useState<CharacterPublicProfileDto | null>(null);
+  const [opponentCharacterProfile, setOpponentCharacterProfile] = useState<CharacterPublicProfileDto | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [activePanel, setActivePanel] = useState<ActivePanel>("chat");
   const [users, setUsers] = useState<PublicUserDto[]>([]);
   const [dialogs, setDialogs] = useState<DialogDto[]>([]);
@@ -103,10 +112,36 @@ export function App() {
     [users]
   );
   const blockedUserIdSet = useMemo(() => new Set(blockedUserIds), [blockedUserIds]);
+  const currentHealth = currentCharacterProfile
+    ? {
+        current: getRegeneratedHp(currentCharacterProfile, now),
+        maximum: currentCharacterProfile.health.maximum
+      }
+    : characterPageData.health;
+  const currentHealthWidth = getMetricPercent(currentHealth.current, currentHealth.maximum);
+  const currentEnergyWidth = getMetricPercent(characterPageData.energy.current, characterPageData.energy.maximum);
+  const currentLevel = currentCharacterProfile?.level ?? characterPageData.level;
+  const opponentHealth = opponentCharacterProfile
+    ? {
+        current: getRegeneratedHp(opponentCharacterProfile, now),
+        maximum: opponentCharacterProfile.health.maximum
+      }
+    : characterPageData.encounter.health;
+  const opponentHealthWidth = getMetricPercent(opponentHealth.current, opponentHealth.maximum);
+  const opponentEnergyWidth = getMetricPercent(characterPageData.encounter.energy.current, characterPageData.encounter.energy.maximum);
+  const opponentLevel = opponentCharacterProfile?.level ?? characterPageData.level;
   const openUserProfile = useCallback((user: PublicUserDto | CurrentUserDto) => {
     setProfileOpen(false);
     setSelectedProfile(user);
   }, []);
+  const refreshCurrentCharacterProfile = useCallback(async () => {
+    if (!token || !me?.id) {
+      return;
+    }
+
+    const profile = await getCharacterPublicProfile(token, me.id);
+    setCurrentCharacterProfile(profile);
+  }, [me?.id, token]);
 
   const viewedUser = profileOpen ? me : selectedProfile;
 
@@ -155,13 +190,18 @@ export function App() {
 
         setToken(response.token);
         setMe(response.user);
-        const [publicHistory, guildHistory, privateFeed, userList, dialogList] = await Promise.all([
+        const [publicHistory, guildHistory, privateFeed, userList, dialogList, characterProfile] = await Promise.all([
           getPublicMessages(response.token),
           getGuildMessages(response.token),
           getPrivateFeedMessages(response.token),
           getUsers(response.token),
-          getDialogs(response.token)
+          getDialogs(response.token),
+          getCharacterPublicProfile(response.token, response.user.id).catch(() => null)
         ]);
+        const initialBattleOpponent = userList.find((user) => displayName(user).trim().toLocaleLowerCase("ru-RU") === "mrred");
+        const opponentCharacterProfile = initialBattleOpponent
+          ? await getCharacterPublicProfile(response.token, initialBattleOpponent.id).catch(() => null)
+          : null;
 
         if (!mounted) {
           return;
@@ -172,6 +212,8 @@ export function App() {
         setPrivateFeedMessages(privateFeed);
         setUsers(userList);
         setDialogs(dialogList);
+        setCurrentCharacterProfile(characterProfile);
+        setOpponentCharacterProfile(opponentCharacterProfile);
         setBlockedUserIds(response.blockedUserIds);
         setStatus("ready");
       } catch (bootError) {
@@ -184,6 +226,11 @@ export function App() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -321,7 +368,17 @@ export function App() {
         returnToBattle: () => {
           setProfileOpen(false);
           setSelectedProfile(null);
+          setInventoryOpen(false);
           setActivePanel("battle");
+        }
+      }}
+    >
+    <InventoryNavigationContext.Provider
+      value={{
+        openInventory: () => {
+          setProfileOpen(false);
+          setSelectedProfile(null);
+          setInventoryOpen(true);
         }
       }}
     >
@@ -330,11 +387,14 @@ export function App() {
       data-chat-collapsed={chatCollapsed || undefined}
       style={{ "--chat-height": chatCollapsed ? "calc(56px + env(safe-area-inset-bottom))" : `${chatHeight}%` } as React.CSSProperties}
     >
-      {viewedUser ? (
+      {viewedUser || inventoryOpen ? (
       <header className={styles.sharedPageHeader}>
         <CharacterHeader
           characterName={me ? displayName(me) : "MrGreen"}
           data={characterPageData}
+          profile={currentCharacterProfile}
+          token={token}
+          userId={me?.id}
           portraitControl={
             me ? (
               <UserActionName
@@ -375,11 +435,11 @@ export function App() {
                 setSelectedProfile(null);
                 setProfileOpen(true);
               }}
-              trigger="MrGreen"
+              trigger={`${displayName(me)} ур.${currentLevel}`}
               triggerClassName={styles.combatantPlayerNameTrigger}
             />
           ) : (
-            <span className={styles.combatantName}>MrGreen</span>
+            <span className={styles.combatantName}>MrGreen ур.{currentLevel}</span>
           )}
           <button
             aria-label="Открыть профиль"
@@ -390,8 +450,8 @@ export function App() {
               setProfileOpen(true);
             }}
           >
-          <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
-          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
+          <span className={styles.combatantBar} data-tone="health"><span style={{ width: `${currentHealthWidth}%` }} /></span>
+          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: `${currentEnergyWidth}%` }} /></span>
           </button>
         </div>
         <div className={styles.roundStatus}>
@@ -407,24 +467,27 @@ export function App() {
               onOpenProfile={openUserProfile}
               onPrivateReply={openPrivateDialog}
               onToggleBlockedUser={toggleBlockedUser}
+              trigger={`${displayName(battleOpponent)} ур.${opponentLevel}`}
               triggerClassName={styles.combatantOpponentNameTrigger}
             />
           ) : (
-            <span className={styles.combatantName}>MrRed</span>
+            <span className={styles.combatantName}>MrRed ур.{opponentLevel}</span>
           )}
-          <span className={styles.combatantBar} data-tone="health"><span style={{ width: "100%" }} /></span>
-          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: "54%" }} /></span>
+          <span className={styles.combatantBar} data-tone="health"><span style={{ width: `${opponentHealthWidth}%` }} /></span>
+          <span className={styles.combatantBar} data-tone="mana"><span style={{ width: `${opponentEnergyWidth}%` }} /></span>
         </div>
         {me?.role === "ADMIN" && adminNotice && <p className={styles.adminNotice}>{adminNotice}</p>}
       </header>
       )}
 
       <main className={styles.main}>
-        <BattleArena />
+        <BattleArena currentProfile={currentCharacterProfile} opponentProfile={opponentCharacterProfile} />
+        {inventoryOpen && <InventoryPage token={token} onCharacterProfileChanged={refreshCurrentCharacterProfile} />}
         {profileOpen && me && (
           <div className={`${styles.topProfile} ${styles.figmaProfileOverlay}`}>
             <HeroProfile
               user={me}
+              token={token}
               playerProfile={playerProfile}
               loading={playerProfileLoading}
               onBack={() => setProfileOpen(false)}
@@ -435,6 +498,7 @@ export function App() {
           <div className={`${styles.topProfile} ${styles.figmaProfileOverlay}`}>
             <HeroProfile
               user={selectedProfile}
+              token={token}
               playerProfile={playerProfile}
               loading={playerProfileLoading}
               isBlocked={blockedUserIdSet.has(selectedProfile.id)}
@@ -553,6 +617,7 @@ export function App() {
           </section>
       </main>
     </div>
+    </InventoryNavigationContext.Provider>
     </BattleNavigationContext.Provider>
     </ChatDockStateContext.Provider>
     </AdminControlsContext.Provider>
@@ -614,6 +679,23 @@ function makeGearItemCard(
   return { id, name, symbol, rarity, description, stats, modifiers };
 }
 
+function getBattleGearItems(side: GearSide): Partial<Record<GearSlotId, GearItemCard>> {
+  return Object.fromEntries(
+    getEquippedGear(side).map((item) => [
+      item.slot,
+      makeGearItemCard(
+        item.id,
+        item.name,
+        item.icon,
+        item.rarity === "common" ? "rare" : item.rarity,
+        item.description,
+        item.stats,
+        item.modifiers
+      )
+    ])
+  ) as Partial<Record<GearSlotId, GearItemCard>>;
+}
+
 const gearSlots: ReadonlyArray<GearSlot> = [
   { id: "earring-left" },
   { id: "earring-right" },
@@ -639,30 +721,56 @@ const gearGridLeftSlotIds = new Set<GearSlotId>([
   "armor",
   "pants"
 ]);
-const gearDrawerStats = {
+const gearGridRightSlotIds = new Set<GearSlotId>(
+  gearSlots.filter((slot) => !gearGridLeftSlotIds.has(slot.id)).map((slot) => slot.id)
+);
+const fallbackGearDrawerStats = {
   player: {
     name: "MrGreen",
     stats: [
-      ["Сила", 333],
-      ["Жизнь", 333],
-      ["Интуиция", 333],
-      ["Интеллект", 333],
-      ["Мудрость", 333],
-      ["Ловкость", 333]
+      ["Сила", 10],
+      ["Ловкость", 10],
+      ["Выносливость", 10],
+      ["Интуиция", 10],
+      ["Интеллект", 10],
+      ["Мудрость", 10]
     ]
   },
   enemy: {
     name: "MrRed",
     stats: [
-      ["Сила", 286],
-      ["Жизнь", 304],
-      ["Интуиция", 351],
-      ["Интеллект", 268],
-      ["Мудрость", 290],
-      ["Ловкость", 327]
+      ["Сила", 10],
+      ["Ловкость", 10],
+      ["Выносливость", 10],
+      ["Интуиция", 10],
+      ["Интеллект", 10],
+      ["Мудрость", 10]
     ]
   }
 } as const;
+
+type GearDrawerStatsData = {
+  name: string;
+  stats: ReadonlyArray<readonly [string, number]>;
+};
+
+function getGearDrawerStats(side: GearSide, profile: CharacterPublicProfileDto | null): GearDrawerStatsData {
+  if (!profile) {
+    return fallbackGearDrawerStats[side];
+  }
+
+  return {
+    name: profile.nickname,
+    stats: [
+      ["Сила", profile.stats.strength],
+      ["Ловкость", profile.stats.agility],
+      ["Выносливость", profile.stats.vitality],
+      ["Интуиция", profile.stats.intuition],
+      ["Интеллект", profile.stats.intelligence],
+      ["Мудрость", profile.stats.wisdom]
+    ]
+  };
+}
 
 // Карточка — единственный источник названия, характеристик и модификаторов предмета.
 const gearItemCards: Record<GearSide, Partial<Record<GearSlotId, GearItemCard>>> = {
@@ -978,7 +1086,7 @@ const gearItemCards: Record<GearSide, Partial<Record<GearSlotId, GearItemCard>>>
   }
 };
 
-function BattleArena() {
+function BattleArena({ currentProfile, opponentProfile }: { currentProfile: CharacterPublicProfileDto | null; opponentProfile: CharacterPublicProfileDto | null }) {
   const [gearDrawerStates, setGearDrawerStates] = useState<Record<GearSide, GearDrawerState>>({
     player: "closed",
     enemy: "closed"
@@ -1059,7 +1167,7 @@ function BattleArena() {
     >
       <div className={styles.battleArenaLayout}>
         <div className={styles.battleScene}>
-          <img alt="Поединок MrGreen и Gestiya под дождём" src="/assets/nightclub/battle-rain.jpg" />
+          <img alt="Поединок MrGreen и Gestiya под дождём" decoding="sync" loading="eager" src="/assets/nightclub/battle-rain.jpg" />
           <div className={styles.battleZoneButtons} data-kind="defense" aria-label="Зоны защиты">
             {combatZones.map((zone) => (
               <button
@@ -1112,10 +1220,10 @@ function BattleArena() {
           </button>
         )}
         {gearDrawerStates.player !== "closed" && (
-          <GearDrawer motion={gearDrawerStates.player} side="player" onClose={() => closeGearDrawer("player")} />
+          <GearDrawer motion={gearDrawerStates.player} profile={currentProfile} side="player" onClose={() => closeGearDrawer("player")} />
         )}
         {gearDrawerStates.enemy !== "closed" && (
-          <GearDrawer motion={gearDrawerStates.enemy} side="enemy" onClose={() => closeGearDrawer("enemy")} />
+          <GearDrawer motion={gearDrawerStates.enemy} profile={opponentProfile} side="enemy" onClose={() => closeGearDrawer("enemy")} />
         )}
         <div className={styles.battleControls}>
           <div className={styles.quickSlots} aria-label="Сумка">
@@ -1138,7 +1246,8 @@ function BattleArena() {
   );
 }
 
-function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude<GearDrawerState, "closed">; onClose: () => void }) {
+function GearDrawer({ side, motion, profile, onClose }: { side: GearSide; motion: Exclude<GearDrawerState, "closed">; profile: CharacterPublicProfileDto | null; onClose: () => void }) {
+  const descriptionOwnerId = useRef(`gear-drawer-${side}-${Math.random().toString(36).slice(2)}`);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const didDragLabel = useRef(false);
@@ -1147,8 +1256,10 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
   const isPlayer = side === "player";
   const [hoveredPreview, setHoveredPreview] = useState<GearItemPreview | null>(null);
   const [selectedPreview, setSelectedPreview] = useState<GearItemPreview | null>(null);
-  const activePreview = hoveredPreview ?? selectedPreview;
-  const itemsBySlot = gearItemCards[side];
+  // Нажатие закрепляет уже показанную hover-карточку; новое наведение её не заменяет.
+  const activePreview = selectedPreview ?? hoveredPreview;
+  const itemsBySlot = getBattleGearItems(side);
+  const statsData = getGearDrawerStats(side, profile);
 
   useEffect(() => {
     function closeDescriptionOutsideItem(event: PointerEvent) {
@@ -1165,6 +1276,11 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
     document.addEventListener("pointerdown", closeDescriptionOutsideItem, true);
     return () => document.removeEventListener("pointerdown", closeDescriptionOutsideItem, true);
   }, []);
+
+  useEffect(() => subscribeItemDescriptionOpen(descriptionOwnerId.current, () => {
+    setHoveredPreview(null);
+    setSelectedPreview(null);
+  }), []);
 
   function createItemPreview(item: GearItemCard, target: HTMLElement): GearItemPreview {
     const drawer = target.closest<HTMLElement>("[data-gear-drawer]");
@@ -1236,6 +1352,7 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
         aria-pressed={isSelected}
         className={styles.gearSlot}
         data-has-item="true"
+        data-item-description-trigger="true"
         data-rarity={item.rarity}
         data-selected={isSelected || undefined}
         data-slot={slot.id}
@@ -1250,6 +1367,7 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
           }
 
           const preview = createItemPreview(item, event.currentTarget);
+          announceItemDescriptionOpen(descriptionOwnerId.current);
           setSelectedPreview((current) => (current?.item.id === item.id ? null : preview));
         }}
         onFocus={(event) => setHoveredPreview(createItemPreview(item, event.currentTarget))}
@@ -1332,17 +1450,17 @@ function GearDrawer({ side, motion, onClose }: { side: GearSide; motion: Exclude
         </div>
         <div className={styles.gearGridPanel} data-side="right">
           <div className={styles.gearSlotStack} data-side="right">
-            {gearSlots.filter((slot) => !gearGridLeftSlotIds.has(slot.id)).map(renderGearSlot)}
+            {gearSlots.filter((slot) => gearGridRightSlotIds.has(slot.id)).map(renderGearSlot)}
           </div>
         </div>
       </div>
-      <GearDrawerStats data={gearDrawerStats[side]} />
+      <GearDrawerStats data={statsData} />
       {activePreview && <GearItemDescription preview={activePreview} />}
     </aside>
   );
 }
 
-function GearDrawerStats({ data }: { data: (typeof gearDrawerStats)[GearSide] }) {
+function GearDrawerStats({ data }: { data: GearDrawerStatsData }) {
   return (
     <section className={styles.gearDrawerStats} aria-label={"Характеристики " + data.name}>
       <h3>{data.name}</h3>
@@ -2369,6 +2487,7 @@ const profileEquipmentRight = ["шлем", "наручи", "перч.", "поя�
 
 function HeroProfile({
   user,
+  token,
   playerProfile,
   loading,
   isBlocked = false,
@@ -2378,6 +2497,7 @@ function HeroProfile({
   onOpenPrivateDialog
 }: {
   user: PublicUserDto | CurrentUserDto;
+  token: string;
   playerProfile: PlayerProfileDto | null;
   loading: boolean;
   isBlocked?: boolean;
@@ -2393,6 +2513,7 @@ function HeroProfile({
       </button>
       <CharacterPage
         characterName={displayName(user)}
+        token={token}
         profileUser={user}
         isBlocked={isBlocked}
         canBlock={canBlock}
@@ -2774,6 +2895,19 @@ function hasBlockedParticipant(message: PrivateMessageDto, blockedUserIds: Set<n
 function displayName(user: PublicUserDto | CurrentUserDto) {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
   return fullName || (user.username ? `@${user.username}` : `User ${user.id}`);
+}
+
+function getMetricPercent(current: number, maximum: number) {
+  if (maximum <= 0) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, (current / maximum) * 100));
+}
+
+function getRegeneratedHp(profile: CharacterPublicProfileDto, now: number) {
+  const elapsedMinutes = Math.max(0, (now - Date.parse(profile.health.regeneratedAt)) / 60_000);
+  return Math.min(profile.health.maximum, Math.floor(profile.health.current + elapsedMinutes * profile.health.regenPerMinute));
 }
 
 function errorMessage(error: unknown, fallback: string) {

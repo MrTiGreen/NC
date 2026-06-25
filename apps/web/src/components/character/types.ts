@@ -11,9 +11,12 @@ export type Currency = {
 };
 
 export type StatusBadge = {
-  id: "survival" | "reputation" | "prestige";
+  id: string;
   label: string;
   tone: "green" | "red" | "purple";
+  icon?: string;
+  title?: string;
+  expiresAt?: string | null;
 };
 
 export type CharacterEncounter = {
@@ -47,6 +50,14 @@ export type EquipmentSlot = {
     | "pants"
     | "boots";
   label: string;
+  icon?: string;
+  itemName?: string;
+  rarity?: "common" | "rare" | "epic";
+  description?: string;
+  requirements?: readonly string[];
+  properties?: readonly string[];
+  armor?: string;
+  damageReduction?: string;
   side: "left" | "right";
   size: "small" | "medium" | "large";
 };

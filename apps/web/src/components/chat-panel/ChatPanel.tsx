@@ -7,7 +7,7 @@ import {
   type RefObject
 } from "react";
 import styles from "./ChatPanel.module.css";
-import { useBattleNavigation, useChatDockState } from "./ChatDockState";
+import { useBattleNavigation, useChatDockState, useInventoryNavigation } from "./ChatDockState";
 
 export type ChatPanelTab<TTab extends string> = {
   value: TTab;
@@ -42,6 +42,7 @@ export function ChatPanel<TTab extends string>({
 }: ChatPanelProps<TTab>) {
   const dockState = useChatDockState();
   const battleNavigation = useBattleNavigation();
+  const inventoryNavigation = useInventoryNavigation();
   const isCollapsed = dockState?.collapsed ?? false;
   const battleTab = "battle" as TTab;
 
@@ -131,7 +132,14 @@ export function ChatPanel<TTab extends string>({
           <button aria-label="Настройки" className={styles.gameAction} data-action="settings" title="Настройки" type="button">
             <span aria-hidden="true">⚙</span>
           </button>
-          <button aria-label="Инвентарь" className={styles.gameAction} data-action="inventory" title="Инвентарь" type="button">
+          <button
+            aria-label="Инвентарь"
+            className={styles.gameAction}
+            data-action="inventory"
+            title="Инвентарь"
+            type="button"
+            onClick={() => inventoryNavigation?.openInventory()}
+          >
             <span aria-hidden="true">▣</span>
           </button>
         </div>

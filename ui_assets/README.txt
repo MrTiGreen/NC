@@ -1,4 +1,4 @@
-Ratny Dvor UI Asset Pack
+NightClub UI Asset Pack
 
 Содержимое:
 - png/: прозрачные PNG ассеты интерфейса

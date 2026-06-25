@@ -46,3 +46,26 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
 
   next();
 }
+
+export async function requirePrimaryAdmin(req: Request, res: Response, next: NextFunction) {
+  const { authUser } = req as AuthenticatedRequest;
+  const user = await prisma.user.findUnique({ where: { id: authUser.id }, select: { role: true, telegramId: true } });
+  const primaryAdminTelegramId = getPrimaryAdminTelegramId();
+
+  if (!primaryAdminTelegramId || user?.role !== UserRole.ADMIN || user.telegramId.toString() !== primaryAdminTelegramId) {
+    res.status(403).json({ error: "Primary administrator access required" });
+    return;
+  }
+
+  next();
+}
+
+function getPrimaryAdminTelegramId() {
+  const configuredAdminIds = config.ADMIN_TELEGRAM_IDS.split(",").map((value) => value.trim()).filter(Boolean);
+
+  if (configuredAdminIds.length > 0) {
+    return configuredAdminIds[0];
+  }
+
+  return config.DEV_TELEGRAM_AUTH ? config.DEV_TELEGRAM_ID : "";
+}

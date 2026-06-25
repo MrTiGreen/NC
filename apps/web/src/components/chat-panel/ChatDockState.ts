@@ -20,3 +20,13 @@ export const BattleNavigationContext = createContext<BattleNavigation | null>(nu
 export function useBattleNavigation() {
   return useContext(BattleNavigationContext);
 }
+
+export type InventoryNavigation = {
+  openInventory: () => void;
+};
+
+export const InventoryNavigationContext = createContext<InventoryNavigation | null>(null);
+
+export function useInventoryNavigation() {
+  return useContext(InventoryNavigationContext);
+}

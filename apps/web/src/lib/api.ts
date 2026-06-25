@@ -3,6 +3,8 @@ import type {
   AdminModerationResultDto,
   AuthResponseDto,
   BlockedUsersDto,
+  CharacterPublicProfileDto,
+  CharacterStatsSaveResponseDto,
   CurrentUserDto,
   DialogDto,
   PrivateMessageDto,
@@ -26,6 +28,62 @@ export async function getMe(token: string) {
 
 export async function getPlayerProfile(token: string, userId: number) {
   return request<PlayerProfileDto>(`/api/player-profile/${userId}`, {}, token);
+}
+
+export async function getCharacterPublicProfile(token: string, userId: number) {
+  return request<CharacterPublicProfileDto>(`/api/player-profile/${userId}/character`, {}, token);
+}
+
+export async function getCharacterProgression(token: string) {
+  return request<CharacterStatsSaveResponseDto>("/api/characters/me/progression", {}, token);
+}
+
+export async function saveCharacterStats(
+  token: string,
+  allocations: { strength: number; agility: number; vitality: number; intuition: number; intelligence: number; wisdom: number }
+) {
+  return request<CharacterStatsSaveResponseDto>(
+    "/api/characters/me/stats",
+    { method: "PUT", body: JSON.stringify({ allocations }) },
+    token
+  );
+}
+
+export type InventoryItemInstanceDto = {
+  id: number;
+  quantity: number;
+  equippedSlot: string | null;
+  inventoryPosition: number | null;
+  currentDurability: string;
+  maxDurability: string;
+  template: {
+    id: number;
+    slug: string;
+    name: string;
+    category: string;
+    icon: string;
+    slot: string | null;
+    description: string;
+    requirements: unknown;
+    properties: unknown;
+    rarity: string;
+    levelRequirement: number;
+    baseWeaponDamage: number;
+    baseArmor: number;
+    armorByZone: unknown;
+  };
+};
+
+export async function getMyInventoryItems(token: string) {
+  return request<InventoryItemInstanceDto[]>("/api/items/me", {}, token);
+}
+
+export async function saveMyInventoryLayout(token: string, items: Array<{ itemInstanceId: number; position: number | null }>) {
+  return request<{ items: InventoryItemInstanceDto[] }>(
+    "/api/items/me/layout",
+    { method: "PUT", body: JSON.stringify({ items }) },
+    token
+  );
 }
 
 export async function getUsers(token: string) {
